@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spanish — Study Hub</title>
+  <title>Dutch — Study Hub</title>
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#1a252f">
   <meta name="mobile-web-app-capable" content="yes">
@@ -34,7 +34,7 @@
 
     /* ── Daily summary bar ── */
     .summary-bar {
-      background: #c0392b; color: white;
+      background: #e67e22; color: white;
       display: flex; justify-content: center; gap: 0;
     }
     .sum-item {
@@ -65,7 +65,7 @@
     }
     .study-card:active { transform: scale(0.98); }
     .study-card:hover  { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
-    .study-card.flash  { border-left-color: #c0392b; }
+    .study-card.flash  { border-left-color: #e67e22; }
     .study-card.lesson { border-left-color: #2980b9; }
     .study-card.weak   { border-left-color: #e67e22; }
     .study-card.disabled { opacity: 0.45; pointer-events: none; }
@@ -75,7 +75,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.5em; flex-shrink: 0;
     }
-    .flash  .sc-icon { background: #fdedec; }
+    .flash  .sc-icon { background: #fef5e7; }
     .lesson .sc-icon { background: #eaf4fb; }
     .weak   .sc-icon { background: #fef5e7; }
 
@@ -86,7 +86,7 @@
       font-size: 0.72em; font-weight: 700; padding: 4px 10px;
       border-radius: 12px; flex-shrink: 0;
     }
-    .flash  .sc-badge { background: #fdedec; color: #c0392b; }
+    .flash  .sc-badge { background: #fef5e7; color: #e67e22; }
     .lesson .sc-badge { background: #eaf4fb; color: #2980b9; }
     .weak   .sc-badge { background: #fef5e7; color: #e67e22; }
 
@@ -114,13 +114,13 @@
       border-radius: 10px; font-size: 0.92em; font-family: inherit;
       outline: none; transition: border-color .2s; background: white;
     }
-    input:focus, textarea:focus { border-color: #c0392b; }
+    input:focus, textarea:focus { border-color: #e67e22; }
     textarea { resize: vertical; min-height: 56px; }
 
     .gen-row { display: flex; gap: 8px; align-items: flex-end; padding-top: 4px; margin-bottom: 12px; }
     .gen-row > div { flex: 1; }
     .btn-gen {
-      padding: 10px 14px; background: #c0392b; color: white; border: none;
+      padding: 10px 14px; background: #e67e22; color: white; border: none;
       border-radius: 10px; font-size: 0.83em; font-weight: 700; cursor: pointer;
       white-space: nowrap; transition: opacity .2s; flex-shrink: 0; height: 40px;
     }
@@ -160,7 +160,7 @@
     .btn-add-ex:hover { background: #e1e8ed; }
 
     .btn-save {
-      width: 100%; padding: 13px; background: #c0392b; color: white; border: none;
+      width: 100%; padding: 13px; background: #e67e22; color: white; border: none;
       border-radius: 12px; font-size: 0.95em; font-weight: 700; cursor: pointer;
       margin-top: 4px; transition: opacity .2s;
     }
@@ -175,13 +175,13 @@
       padding: 8px 12px; border: 1.5px solid #e1e8ed; border-radius: 10px;
       font-size: 0.85em; width: 160px; outline: none;
     }
-    #search:focus { border-color: #c0392b; }
+    #search:focus { border-color: #e67e22; }
     .sort-btn {
       background: none; border: 1.5px solid #e1e8ed; border-radius: 10px;
       padding: 6px 10px; font-size: 0.75em; cursor: pointer; color: #7f8c8d;
       white-space: nowrap;
     }
-    .sort-btn.active { border-color: #c0392b; color: #c0392b; background: #fdedec; }
+    .sort-btn.active { border-color: #e67e22; color: #e67e22; background: #fef5e7; }
 
     .vocab-list { display: flex; flex-direction: column; gap: 8px; }
     .vocab-card {
@@ -190,7 +190,7 @@
       box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #e1e8ed;
     }
     .vocab-card.is-weak  { border-left-color: #e67e22; }
-    .vocab-card.is-due   { border-left-color: #c0392b; }
+    .vocab-card.is-due   { border-left-color: #e67e22; }
     .vocab-card.is-new   { border-left-color: #2980b9; }
     .vocab-card.is-ok    { border-left-color: #27ae60; }
 
@@ -204,7 +204,7 @@
       font-size: 0.68em; font-weight: 700; padding: 3px 8px;
       border-radius: 10px; white-space: nowrap;
     }
-    .pill-due    { background: #fdedec; color: #c0392b; }
+    .pill-due    { background: #fef5e7; color: #e67e22; }
     .pill-new    { background: #eaf4fb; color: #2980b9; }
     .pill-ok     { background: #eafaf1; color: #27ae60; }
     .pill-weak   { background: #fef5e7; color: #e67e22; }
@@ -239,13 +239,13 @@
     .modal .modal-sub { font-size: 0.82em; color: #7f8c8d; margin-bottom: 18px; line-height: 1.5; }
     .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
     .btn-cancel { flex: 1; padding: 12px; background: #f0f2f5; color: #7f8c8d; border: none; border-radius: 12px; font-size: 0.9em; cursor: pointer; }
-    .btn-ok     { flex: 2; padding: 12px; background: #c0392b; color: white; border: none; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; }
+    .btn-ok     { flex: 2; padding: 12px; background: #e67e22; color: white; border: none; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; }
     .key-hint   { font-size: 0.72em; color: #bdc3c7; margin-top: 4px; }
     .provider-btn {
       flex: 1; padding: 9px; background: #f0f2f5; border: 2px solid #e1e8ed;
       border-radius: 10px; font-size: 0.88em; font-weight: 700; cursor: pointer; color: #7f8c8d;
     }
-    .provider-btn.active { border-color: #c0392b; color: #c0392b; background: #fdedec; }
+    .provider-btn.active { border-color: #e67e22; color: #e67e22; background: #fef5e7; }
 
     /* ── Import ── */
     .btn-import {
@@ -264,7 +264,7 @@
       text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
       color: #7f8c8d; font-size: 0.88em; line-height: 1.8;
     }
-    .import-drop:hover, .import-drop.drag-over { border-color: #c0392b; background: rgba(192,57,43,0.04); }
+    .import-drop:hover, .import-drop.drag-over { border-color: #e67e22; background: rgba(192,57,43,0.04); }
     .import-drop strong { display: block; font-size: 1em; color: #2c3e50; margin-bottom: 2px; }
     .import-preview { overflow-x: auto; margin-top: 14px; border: 1px solid #e1e8ed; border-radius: 10px; }
     .import-preview table { width: 100%; border-collapse: collapse; font-size: 0.8em; min-width: 280px; }
@@ -274,7 +274,7 @@
     .col-map-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
     .col-map-row label { font-size: 0.75em; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: .5px; width: 110px; flex-shrink: 0; margin: 0; }
     .col-map-row select { flex: 1; padding: 7px 10px; border: 1.5px solid #e1e8ed; border-radius: 8px; font-size: 0.85em; font-family: inherit; outline: none; background: white; }
-    .col-map-row select:focus { border-color: #c0392b; }
+    .col-map-row select:focus { border-color: #e67e22; }
     .modal.wide { width: min(500px, calc(100vw - 32px)); }
     .import-has-header-row { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 0.85em; color: #2c3e50; cursor: pointer; font-weight: normal; text-transform: none; letter-spacing: 0; }
     .import-has-header-row input { cursor: pointer; }
@@ -289,7 +289,7 @@
       transition: background .15s, border-color .15s;
     }
     .tag-chip:hover  { background: #f0f2f5; }
-    .tag-chip.active { border-color: #c0392b; color: #c0392b; background: #fdedec; }
+    .tag-chip.active { border-color: #e67e22; color: #e67e22; background: #fef5e7; }
 
     /* ── Duplicate badge ── */
     .dup-badge {
@@ -310,10 +310,10 @@
       padding: 8px 12px; border-radius: 8px; border: 1.5px solid #e1e8ed;
       cursor: pointer; transition: border-color .15s, background .15s; font-size: 0.82em;
     }
-    .def-option:hover  { border-color: #c0392b; background: #fff8f7; }
-    .def-option.active { border-color: #c0392b; background: #fdedec; }
+    .def-option:hover  { border-color: #e67e22; background: #fff8f7; }
+    .def-option.active { border-color: #e67e22; background: #fef5e7; }
     .def-option .def-pos  { font-size: 0.75em; font-weight: 700; text-transform: uppercase;
-                            letter-spacing: .5px; color: #c0392b; margin-bottom: 2px; }
+                            letter-spacing: .5px; color: #e67e22; margin-bottom: 2px; }
     .def-option .def-text { color: #2c3e50; line-height: 1.4; }
   </style>
 </head>
@@ -321,7 +321,7 @@
 
 <header>
   <a class="back" href="../index.html">← Languages</a>
-  <h1>Spanish</h1>
+  <h1>Dutch</h1>
   <p>Vocabulary · Flashcards · Lessons</p>
   <button class="btn-settings" onclick="openSettings()" title="Settings">⚙️</button>
 </header>
@@ -385,8 +385,8 @@
 
       <div class="gen-row">
         <div>
-          <label>Spanish Word / Phrase</label>
-          <input id="f-term" type="text" placeholder="e.g. hablar" autocomplete="off" spellcheck="false">
+          <label>Dutch Word / Phrase</label>
+          <input id="f-term" type="text" placeholder="e.g. spreken" autocomplete="off" spellcheck="false">
         </div>
         <button class="btn-autofill" id="btn-autofill" onclick="doAutoFill()">🔤 Auto-fill</button>
         <button class="btn-gen" id="btn-gen" onclick="doGenerate()">✨ Generate</button>
@@ -420,7 +420,7 @@
         <label>Example Sentences</label>
         <ul class="example-list" id="example-list"></ul>
         <div class="ex-input-row">
-          <input id="f-ex-es" type="text" placeholder="Spanish sentence…">
+          <input id="f-ex-es" type="text" placeholder="Dutch sentence…">
         </div>
         <button class="btn-add-ex" onclick="addExample()">+ Add sentence</button>
       </div>
@@ -500,7 +500,7 @@
 
       <div style="margin-top:14px">
         <div class="col-map-row">
-          <label>Spanish *</label>
+          <label>Dutch *</label>
           <select id="col-spanish" onchange="updateImportCount()"></select>
         </div>
         <div class="col-map-row">
@@ -532,7 +532,7 @@
     <h2>Edit Word</h2>
     <div class="form-row">
       <div class="form-group">
-        <label>Spanish Term</label>
+        <label>Dutch Term</label>
         <input id="e-term" type="text" autocomplete="off" spellcheck="false">
       </div>
       <div class="form-group" style="max-width:130px">
@@ -562,7 +562,7 @@
       <label>Example Sentences</label>
       <ul class="example-list" id="e-example-list"></ul>
       <div class="ex-input-row">
-        <input id="e-ex-es" type="text" placeholder="Spanish sentence…">
+        <input id="e-ex-es" type="text" placeholder="Dutch sentence…">
       </div>
       <button class="btn-add-ex" onclick="editAddExample()">+ Add sentence</button>
     </div>
@@ -610,9 +610,9 @@
 
   function refreshStats() {
     const s = VS.getStats();
-    document.getElementById('stat-total').textContent = s.total;
-    document.getElementById('stat-due').textContent   = s.due;
-    document.getElementById('stat-new').textContent   = s.isNew;
+    document.getElementById('stat-total').textContent  = s.total;
+    document.getElementById('stat-due').textContent    = s.due;
+    document.getElementById('stat-new').textContent    = s.isNew;
     document.getElementById('stat-weak').textContent   = s.weak;
     document.getElementById('stat-streak').textContent = VS.getStreak().current || 0;
 
@@ -622,7 +622,6 @@
     document.getElementById('badge-weak').textContent =
       s.weak + (s.weak === 1 ? ' word' : ' words');
 
-    // Disable cards if not enough words
     const lessonCard = document.getElementById('card-lesson');
     const weakCard   = document.getElementById('card-weak');
     lessonCard.classList.toggle('disabled', s.total < 4);
@@ -816,7 +815,7 @@
 
   async function editAutoFill() {
     const term = document.getElementById('e-term').value.trim();
-    if (!term) { alert('Fill in the Spanish term first.'); return; }
+    if (!term) { alert('Fill in the Dutch term first.'); return; }
     const btn = document.getElementById('e-btn-autofill');
     btn.disabled = true; btn.textContent = '⏳';
     setEditMsg('', '');
@@ -834,7 +833,7 @@
 
   async function editGenerate() {
     const term = document.getElementById('e-term').value.trim();
-    if (!term) { alert('Fill in the Spanish term first.'); return; }
+    if (!term) { alert('Fill in the Dutch term first.'); return; }
     const btn = document.getElementById('e-btn-gen');
     btn.disabled = true; btn.textContent = '⏳';
     setEditMsg('', '');
@@ -888,7 +887,7 @@
     const term  = document.getElementById('f-term').value.trim();
     const trans = document.getElementById('f-trans').value.trim();
     if (!term || !trans) {
-      alert('Please fill in the Spanish term and English translation.');
+      alert('Please fill in the Dutch term and English translation.');
       return;
     }
     const userTags = document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
@@ -936,7 +935,7 @@
   /* ── Free Auto-fill ─────────────────────── */
   async function doAutoFill() {
     const term = document.getElementById('f-term').value.trim();
-    if (!term) { alert('Type a Spanish word first.'); return; }
+    if (!term) { alert('Type a Dutch word first.'); return; }
     const btn = document.getElementById('btn-autofill');
     btn.disabled = true; btn.textContent = '⏳';
     setGenMsg('', '');
@@ -957,7 +956,7 @@
   /* ── AI Generate ─────────────────────── */
   async function doGenerate() {
     const term = document.getElementById('f-term').value.trim();
-    if (!term) { alert('Type a Spanish word first.'); return; }
+    if (!term) { alert('Type a Dutch word first.'); return; }
     const btn = document.getElementById('btn-gen');
     btn.disabled = true; btn.textContent = '⏳';
     setGenMsg('', '');
@@ -1139,7 +1138,7 @@
     // Auto-detect column mapping from header names
     const hl   = _importHeaders.map(h => h.toLowerCase());
     const find = (...kws) => hl.findIndex(h => kws.some(k => h.includes(k)));
-    const si   = find('spanish','term','es','word','palabra');
+    const si   = find('dutch','nl','term','woord','word');
     const ei   = find('english','translation','en','meaning','translate');
     const pi   = find('pos','part','speech','type','clase');
     const di   = find('def','description','note','definición');
@@ -1273,7 +1272,7 @@
     const isCSV     = _exportFmt === 'csv';
     const content   = isCSV ? generateCSV() : generateJSON();
     const mime      = isCSV ? 'text/csv' : 'application/json';
-    const filename  = `accento-spanish-${_dateStamp()}.${_exportFmt}`;
+    const filename  = `accento-dutch-${_dateStamp()}.${_exportFmt}`;
     return { content, mime, filename };
   }
 
@@ -1292,7 +1291,7 @@
     const { content, mime, filename } = _buildFile();
     const file = new File([content], filename, { type: mime });
     try {
-      await navigator.share({ files: [file], title: 'Accento — Spanish vocabulary' });
+      await navigator.share({ files: [file], title: 'Accento — Dutch vocabulary' });
       closeExport();
     } catch(e) {
       if (e.name !== 'AbortError') alert('Could not share: ' + e.message);

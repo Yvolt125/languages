@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Flashcards — Spanish</title>
+  <title>Flashcards — Dutch</title>
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#1a252f">
   <meta name="mobile-web-app-capable" content="yes">
@@ -27,7 +27,7 @@
     .prog-text { font-size: 0.8em; color: rgba(255,255,255,0.6); }
 
     .progress-bar { height: 5px; background: #2c3e50; flex-shrink: 0; }
-    .progress-fill { height: 100%; background: #c0392b; transition: width .35s; }
+    .progress-fill { height: 100%; background: #e67e22; transition: width .35s; }
 
     /* ── Screens ── */
     .screen { flex: 1; display: none; flex-direction: column; }
@@ -42,7 +42,7 @@
     .center-box h2 { font-size: 1.25em; font-weight: 800; color: #2c3e50; }
     .center-box p  { font-size: 0.88em; color: #7f8c8d; max-width: 280px; line-height: 1.5; }
     .btn-primary {
-      padding: 14px 36px; background: #c0392b; color: white; border: none;
+      padding: 14px 36px; background: #e67e22; color: white; border: none;
       border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer;
     }
     .btn-secondary {
@@ -89,9 +89,9 @@
     .card-back-face {
       transform: rotateY(180deg);
       justify-content: flex-start;
-      border-top: 5px solid #c0392b;
+      border-top: 5px solid #e67e22;
     }
-    .card-front-face { border-top: 5px solid #c0392b; }
+    .card-front-face { border-top: 5px solid #e67e22; }
 
     /* Drag overlays */
     .drag-overlay {
@@ -109,14 +109,14 @@
     .card-term    { font-size: 2.1em; font-weight: 800; color: #2c3e50; text-align: center; line-height: 1.2; }
     .tap-hint     { font-size: 0.75em; color: #bdc3c7; margin-top: 14px; }
     .btn-tts-front {
-      margin-top: 14px; background: #fdedec; border: none; border-radius: 50%;
+      margin-top: 14px; background: #fef5e7; border: none; border-radius: 50%;
       width: 44px; height: 44px; font-size: 1.15em; cursor: pointer;
       display: flex; align-items: center; justify-content: center; transition: background .2s;
     }
     .btn-tts-front:hover { background: #f5b7b1; }
 
     /* Back */
-    .back-translation { font-size: 1.65em; font-weight: 800; color: #c0392b;
+    .back-translation { font-size: 1.65em; font-weight: 800; color: #e67e22;
                         text-align: center; margin-bottom: 4px; }
     .back-pos  { font-size: 0.72em; color: #bdc3c7; text-transform: uppercase;
                  letter-spacing: 1px; margin-bottom: 12px; }
@@ -130,8 +130,8 @@
     .ex-es    { font-size: 0.88em; color: #2c3e50; font-style: italic; margin-bottom: 3px; }
     .ex-en    { font-size: 0.78em; color: #7f8c8d; }
     .btn-tts-ex {
-      margin-top: 8px; background: #fdedec; border: none; border-radius: 8px;
-      padding: 6px 12px; font-size: 0.78em; cursor: pointer; color: #c0392b; font-weight: 600;
+      margin-top: 8px; background: #fef5e7; border: none; border-radius: 8px;
+      padding: 6px 12px; font-size: 0.78em; cursor: pointer; color: #e67e22; font-weight: 600;
     }
     .btn-tts-ex:hover { background: #f5b7b1; }
 
@@ -151,7 +151,7 @@
 
     /* ── Done screen ── */
     .done-stats { display: flex; gap: 24px; justify-content: center; }
-    .ds-num { font-size: 2em; font-weight: 800; color: #c0392b; }
+    .ds-num { font-size: 2em; font-weight: 800; color: #e67e22; }
     .ds-lbl { font-size: 0.75em; color: #7f8c8d; margin-top: 2px; }
     .ds     { text-align: center; }
 
@@ -167,8 +167,8 @@
     .type-input-row { display: flex; gap: 8px; }
     .type-input { flex: 1; padding: 12px 14px; border: 2px solid #e1e8ed; border-radius: 12px;
                   font-size: 1em; font-family: inherit; outline: none; text-align: center; }
-    .type-input:focus { border-color: #c0392b; }
-    .btn-check { padding: 12px 18px; background: #c0392b; color: white; border: none;
+    .type-input:focus { border-color: #e67e22; }
+    .btn-check { padding: 12px 18px; background: #e67e22; color: white; border: none;
                  border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; white-space: nowrap; }
     .type-result { font-size: 0.88em; text-align: center; min-height: 20px; font-weight: 700; }
     .type-result.correct { color: #27ae60; }
@@ -179,7 +179,7 @@
 <body>
 
 <header>
-  <a class="back" href="index.html">← Spanish</a>
+  <a class="back" href="index.html">← Dutch</a>
   <div class="mode-toggle" id="mode-toggle">
     <button class="mode-toggle-btn active" id="toggle-flip" onclick="setFlashMode('flip')">Flip</button>
     <button class="mode-toggle-btn"        id="toggle-type" onclick="setFlashMode('type')">Type</button>
@@ -211,14 +211,14 @@
 
       <!-- Front -->
       <div class="card-face card-front-face">
-        <div class="front-label" id="front-label">Spanish</div>
+        <div class="front-label" id="front-label">Dutch</div>
         <div class="card-term" id="card-term"></div>
         <div class="tap-hint" id="tap-hint">tap to reveal</div>
         <button class="btn-tts-front" id="btn-tts-f" style="display:none"
                 onclick="event.stopPropagation(); VS.speak(currentCard.term)">🔊</button>
         <div class="type-area" id="type-area">
           <div class="type-input-row">
-            <input class="type-input" id="type-input" type="text" placeholder="Type the Spanish…"
+            <input class="type-input" id="type-input" type="text" placeholder="Type the Dutch…"
                    autocomplete="off" spellcheck="false" autocorrect="off"
                    onkeydown="if(event.key==='Enter')submitType()">
             <button class="btn-check" onclick="submitType()">Check</button>
@@ -336,7 +336,7 @@
 
     const isType = flashMode === 'type';
 
-    document.getElementById('front-label').textContent = isType ? 'English' : 'Spanish';
+    document.getElementById('front-label').textContent = isType ? 'English' : 'Dutch';
     document.getElementById('card-term').textContent   = isType ? currentCard.translation : currentCard.term;
     document.getElementById('tap-hint').style.display  = isType ? 'none' : '';
     if (!isType) document.getElementById('tap-hint').textContent = 'tap to reveal';
@@ -564,13 +564,11 @@
     typeSubmitted = true;
     document.getElementById('type-input').disabled = true;
 
-    // Auto-reveal the back
     const fi = document.getElementById('flip-inner');
     fi.classList.add('flipped');
     revealed = true;
     document.getElementById('grade-area').classList.add('visible');
 
-    // Pre-highlight the likely grade button
     const btns = document.querySelectorAll('.btn-grade');
     btns.forEach(b => b.style.opacity = '0.4');
     const idx = isCorrect ? 1 : 0;

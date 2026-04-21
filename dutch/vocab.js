@@ -1,8 +1,8 @@
 'use strict';
 (function(g) {
-  const VOCAB_KEY    = 'spanish_vocab';
-  const SETTINGS_KEY = 'spanish_settings';
-  const STREAK_KEY   = 'spanish_streak';
+  const VOCAB_KEY    = 'dutch_vocab';
+  const SETTINGS_KEY = 'dutch_settings';
+  const STREAK_KEY   = 'dutch_streak';
 
   function uid() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -169,7 +169,7 @@
     speak(text, lang) {
       if (!this.hasTTS()) return;
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang || 'es-ES';
+      u.lang = lang || 'nl-NL';
       u.rate = 0.85;
       speechSynthesis.cancel();
       speechSynthesis.speak(u);
@@ -178,7 +178,7 @@
     /* ── Free Auto-fill (no key needed) ──────────── */
     async autoFill(term) {
       const tr = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(term)}&langpair=es|en`
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(term)}&langpair=nl|en`
       );
       if (!tr.ok) throw new Error(`Translation error ${tr.status}`);
       const trData = await tr.json();
@@ -217,14 +217,14 @@
       const provider = s.aiProvider || 'claude';
 
       const PROMPT =
-`You are a Spanish language expert. For the Spanish word or phrase "${term}", return ONLY a JSON object — no other text:
+`You are a Dutch language expert. For the Dutch word or phrase "${term}", return ONLY a JSON object — no other text:
 {
   "translation": "English translation",
   "definition": "One sentence English definition",
   "partOfSpeech": "noun/verb/adjective/adverb/phrase/etc",
   "examples": [
-    { "es": "Natural Spanish sentence using the exact word/phrase.", "en": "English translation." },
-    { "es": "Another natural example.", "en": "English translation." }
+    { "nl": "Natural Dutch sentence using the exact word/phrase.", "en": "English translation." },
+    { "nl": "Another natural example.", "en": "English translation." }
   ]
 }`;
 

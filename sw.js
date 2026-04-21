@@ -1,4 +1,4 @@
-const CACHE_NAME = 'accento-v2';
+const CACHE_NAME = 'accento-v3';
 
 const PRE_CACHE = [
   './index.html',
@@ -7,7 +7,11 @@ const PRE_CACHE = [
   './spanish/index.html',
   './spanish/flashcards.html',
   './spanish/lessons.html',
-  './spanish/vocab.js'
+  './spanish/vocab.js',
+  './dutch/index.html',
+  './dutch/flashcards.html',
+  './dutch/lessons.html',
+  './dutch/vocab.js'
 ];
 
 self.addEventListener('install', e => {
