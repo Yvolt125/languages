@@ -456,7 +456,10 @@
         <div class="ex-input-row">
           <input id="f-ex-es" type="text" placeholder="Spanish sentence…">
         </div>
-        <button class="btn-add-ex" onclick="addExample()">+ Add sentence</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-add-ex" onclick="addExample()">+ Add sentence</button>
+          <button class="btn-add-ex" onclick="doGenExamples()">✨ Examples</button>
+        </div>
       </div>
 
       <button class="btn-save" onclick="saveWord()">Save Word</button>
@@ -602,7 +605,10 @@
       <div class="ex-input-row">
         <input id="e-ex-es" type="text" placeholder="Spanish sentence…">
       </div>
-      <button class="btn-add-ex" onclick="editAddExample()">+ Add sentence</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-add-ex" onclick="editAddExample()">+ Add sentence</button>
+        <button class="btn-add-ex" onclick="editGenExamples()">✨ Examples</button>
+      </div>
     </div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
@@ -915,20 +921,39 @@
     btn.disabled = true; btn.textContent = '⏳';
     setEditMsg('', '');
     try {
-      const data = await VS.generate(term);
-      const items = Array.isArray(data) ? data : [data];
-      if (items.length === 1) {
-        applyEditGenResult(items[0]);
-        setEditMsg('ok', '✅ Generated — review and save.');
+      const items = await VS.generateMeanings(term);
+      const applyMeaning = async d => {
+        if (d.translation)  document.getElementById('e-trans').value = d.translation;
+        if (d.definition)   document.getElementById('e-def').value   = d.definition;
+        if (d.partOfSpeech) document.getElementById('e-pos').value   = d.partOfSpeech;
+        setEditMsg('ok', '✨ Generating examples…');
+        try {
+          const exs = await VS.generateExamples(term, d.translation, d.partOfSpeech);
+          if (exs.length) { editExamples = exs; renderEditExamples(); }
+        } catch(_) {}
+        setEditMsg('ok', '✅ Done — review and save.');
+      };
+      if (items.length > 1) {
+        renderInterpPicker('e-interp-picker', items, applyMeaning);
+        setEditMsg('ok', '✨ Multiple meanings — pick one below.');
       } else {
-        renderInterpPicker('e-interp-picker', items, d => {
-          applyEditGenResult(d);
-          setEditMsg('ok', '✅ Generated — review and save.');
-        });
-        setEditMsg('ok', '✨ Multiple meanings found — pick one below.');
+        await applyMeaning(items[0]);
       }
     } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
     btn.disabled = false; btn.textContent = '✨ Generate';
+  }
+
+  async function editGenExamples() {
+    const term  = document.getElementById('e-term').value.trim();
+    const trans = document.getElementById('e-trans').value.trim();
+    const pos   = document.getElementById('e-pos').value.trim();
+    if (!term || !trans) { alert('Fill in the Spanish term and translation first.'); return; }
+    setEditMsg('ok', '✨ Generating examples…');
+    try {
+      const exs = await VS.generateExamples(term, trans, pos);
+      if (exs.length) { editExamples = exs; renderEditExamples(); }
+      setEditMsg('ok', '✅ Examples added — review and save.');
+    } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
   }
 
   document.getElementById('edit-modal').addEventListener('click', function(e) {
@@ -1083,20 +1108,6 @@
   }
 
   /* ── AI Generate ─────────────────────── */
-  function applyGenResult(data) {
-    if (data.translation)  document.getElementById('f-trans').value = data.translation;
-    if (data.definition)   document.getElementById('f-def').value   = data.definition;
-    if (data.partOfSpeech) document.getElementById('f-pos').value   = data.partOfSpeech;
-    if (data.examples?.length) { pendingExamples = data.examples; renderExamples(); }
-  }
-
-  function applyEditGenResult(data) {
-    if (data.translation)  document.getElementById('e-trans').value = data.translation;
-    if (data.definition)   document.getElementById('e-def').value   = data.definition;
-    if (data.partOfSpeech) document.getElementById('e-pos').value   = data.partOfSpeech;
-    if (data.examples?.length) { editExamples = data.examples; renderEditExamples(); }
-  }
-
   function renderInterpPicker(pickerId, items, onPick) {
     const el = document.getElementById(pickerId);
     if (!items || items.length <= 1) { el.style.display = 'none'; el.innerHTML = ''; return; }
@@ -1127,22 +1138,39 @@
     btn.disabled = true; btn.textContent = '⏳';
     setGenMsg('', '');
     try {
-      const data = await VS.generate(term);
-      const items = Array.isArray(data) ? data : [data];
-      if (items.length === 1) {
-        applyGenResult(items[0]);
-        setGenMsg('ok', '✅ Generated — review and save.');
+      const items = await VS.generateMeanings(term);
+      const applyMeaning = async d => {
+        if (d.translation)  document.getElementById('f-trans').value = d.translation;
+        if (d.definition)   document.getElementById('f-def').value   = d.definition;
+        if (d.partOfSpeech) document.getElementById('f-pos').value   = d.partOfSpeech;
+        setGenMsg('ok', '✨ Generating examples…');
+        try {
+          const exs = await VS.generateExamples(term, d.translation, d.partOfSpeech);
+          if (exs.length) { pendingExamples = exs; renderExamples(); }
+        } catch(_) {}
+        setGenMsg('ok', '✅ Done — review and save.');
+      };
+      if (items.length > 1) {
+        renderInterpPicker('f-interp-picker', items, applyMeaning);
+        setGenMsg('ok', '✨ Multiple meanings — pick one below.');
       } else {
-        renderInterpPicker('f-interp-picker', items, d => {
-          applyGenResult(d);
-          setGenMsg('ok', '✅ Generated — review and save.');
-        });
-        setGenMsg('ok', '✨ Multiple meanings found — pick one below.');
+        await applyMeaning(items[0]);
       }
-    } catch(e) {
-      setGenMsg('err', '⚠️ ' + e.message);
-    }
+    } catch(e) { setGenMsg('err', '⚠️ ' + e.message); }
     btn.disabled = false; btn.textContent = '✨ Generate';
+  }
+
+  async function doGenExamples() {
+    const term  = document.getElementById('f-term').value.trim();
+    const trans = document.getElementById('f-trans').value.trim();
+    const pos   = document.getElementById('f-pos').value.trim();
+    if (!term || !trans) { alert('Fill in the Spanish term and translation first.'); return; }
+    setGenMsg('ok', '✨ Generating examples…');
+    try {
+      const exs = await VS.generateExamples(term, trans, pos);
+      if (exs.length) { pendingExamples = exs; renderExamples(); }
+      setGenMsg('ok', '✅ Examples added — review and save.');
+    } catch(e) { setGenMsg('err', '⚠️ ' + e.message); }
   }
 
   function setGenMsg(type, msg) {

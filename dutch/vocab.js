@@ -218,73 +218,65 @@
     },
 
     /* ── AI Generation ────────────────────────────── */
-    async generate(term) {
+    async _aiCall(prompt, maxTokens) {
       const s = this.getSettings();
       const provider = s.aiProvider || 'claude';
-
-      const PROMPT =
-`You are a Dutch language expert. For the Dutch word or phrase "${term}", return ONLY a JSON array — no other text. Include ALL distinct interpretations (aim for 2–3 when the word is in any way ambiguous):
-[
-  {
-    "translation": "English translation",
-    "definition": "One sentence English definition",
-    "partOfSpeech": "noun/verb/adjective/adverb/interjection/onomatopoeia/etc",
-    "examples": [
-      { "nl": "Natural Dutch sentence using the exact word/phrase.", "en": "English translation." },
-      { "nl": "Another natural example.", "en": "English translation." }
-    ]
-  }
-]
-Consider: different parts of speech, informal/slang vs formal, onomatopoeia vs literal, different grammatical forms with different meanings. When in doubt, include more interpretations rather than fewer.`;
-
       if (provider === 'gemini') {
         const key = s.geminiApiKey;
         if (!key) throw new Error('No Gemini API key set — add it in Settings ⚙️');
         const resp = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }] }] })
-          }
+          { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
         );
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.error?.message || `Gemini API error ${resp.status}`);
-        }
+        if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message || `Gemini API error ${resp.status}`); }
         const data = await resp.json();
-        const text = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-        const match = text.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
-        if (!match) throw new Error('Could not parse AI response');
-        return JSON.parse(match[0]);
+        return (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
       }
-
-      // Default: Claude
       const key = s.claudeApiKey;
       if (!key) throw new Error('No Claude API key set — add it in Settings ⚙️');
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1500,
-          messages: [{ role: 'user', content: PROMPT }]
-        })
+        headers: { 'Content-Type': 'application/json', 'x-api-key': key,
+                   'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens,
+                               messages: [{ role: 'user', content: prompt }] })
       });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error?.message || `Claude API error ${resp.status}`);
-      }
+      if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(e.error?.message || `Claude API error ${resp.status}`); }
       const data = await resp.json();
-      const text = (data.content?.[0]?.text || '').trim();
+      return (data.content?.[0]?.text || '').trim();
+    },
+
+    _parseJSON(text) {
       const match = text.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
       if (!match) throw new Error('Could not parse AI response');
       return JSON.parse(match[0]);
+    },
+
+    // Phase 1: meanings only (no examples) — fast, returns array
+    async generateMeanings(term) {
+      const PROMPT =
+`You are a Dutch language expert. For the Dutch word or phrase "${term}", return ONLY a JSON array of all distinct interpretations — no other text:
+[{ "translation": "English translation", "definition": "One sentence English definition", "partOfSpeech": "noun/verb/adjective/adverb/interjection/onomatopoeia/etc" }]
+Include every distinct use: different parts of speech, onomatopoeia, informal/slang, idiomatic. Return at least 2 items if the word has any ambiguity at all.`;
+      const text = await this._aiCall(PROMPT, 400);
+      const data = this._parseJSON(text);
+      return Array.isArray(data) ? data : [data];
+    },
+
+    // Phase 2: examples for a specific chosen meaning
+    async generateExamples(term, translation, partOfSpeech) {
+      const PROMPT =
+`You are a Dutch language expert. Give 2 natural example sentences for the Dutch word "${term}" used specifically as "${translation}" (${partOfSpeech}). Return ONLY a JSON array — no other text:
+[{ "nl": "Dutch sentence using the word.", "en": "English translation." }, { "nl": "Another natural example.", "en": "English translation." }]`;
+      const text = await this._aiCall(PROMPT, 400);
+      const data = this._parseJSON(text);
+      return Array.isArray(data) ? data : [];
+    },
+
+    // Legacy alias
+    async generate(term) {
+      return this.generateMeanings(term);
     }
   };
 
