@@ -304,6 +304,15 @@
                       font-size: 0.85em; color: #2c3e50; cursor: pointer; }
     .export-srs-row input { cursor: pointer; }
 
+    /* ── Tag suggestions ── */
+    .tag-suggestions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+    .tag-sug-chip {
+      background: #f0f2f5; border: 1.5px solid #e1e8ed; border-radius: 20px;
+      padding: 3px 10px; font-size: 0.72em; cursor: pointer; color: #7f8c8d;
+      transition: background .15s, border-color .15s, color .15s;
+    }
+    .tag-sug-chip:hover, .tag-sug-chip.active { border-color: #c0392b; color: #c0392b; background: #fdedec; }
+
     /* ── Translation alternatives ── */
     .trans-alts { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; min-height: 0; }
     .trans-alt-chip {
@@ -382,7 +391,7 @@
   <div class="add-vocab-head">
     <div class="sec-label">Add Vocabulary</div>
     <div style="display:flex;gap:6px">
-      <button class="btn-import" onclick="openExport()">⬇ Export</button>
+      <button class="btn-import" onclick="openExport()">⬇ Export File</button>
       <button class="btn-import" onclick="openImport()">⬆ Import file</button>
     </div>
   </div>
@@ -425,6 +434,7 @@
       <div class="form-group">
         <label>Tags <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional, comma-separated)</span></label>
         <input id="f-tags" type="text" placeholder="food, travel, verbs…">
+        <div class="tag-suggestions" id="f-tag-sugs"></div>
       </div>
 
       <div class="form-group">
@@ -569,6 +579,7 @@
     <div class="form-group">
       <label>Tags <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional, comma-separated)</span></label>
       <input id="e-tags" type="text" placeholder="food, travel, verbs…">
+      <div class="tag-suggestions" id="e-tag-sugs"></div>
     </div>
     <div class="form-group">
       <label>Example Sentences</label>
@@ -599,7 +610,7 @@
     <div class="key-hint" style="margin-bottom:14px">console.anthropic.com · Claude Haiku</div>
     <label>Gemini API Key</label>
     <input id="gemini-key-input" type="password" placeholder="AIza…" autocomplete="off" style="margin-bottom:6px">
-    <div class="key-hint">aistudio.google.com · Gemini 2.0 Flash</div>
+    <div class="key-hint">aistudio.google.com · Gemini 1.5 Flash</div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
       <button class="btn-ok"     onclick="saveApiKey()">Save</button>
@@ -617,6 +628,7 @@
   function init() {
     refreshStats();
     renderTagChips();
+    renderTagSuggestions('f-tags', 'f-tag-sugs');
     renderList();
   }
 
@@ -767,6 +779,7 @@
     document.getElementById('e-def').value   = w.definition   || '';
     const userTags = (w.tags || []).filter(t => t !== '⚠ possible duplicate');
     document.getElementById('e-tags').value  = userTags.join(', ');
+    renderTagSuggestions('e-tags', 'e-tag-sugs');
     renderEditExamples();
     document.getElementById('edit-modal').classList.add('open');
   }
@@ -916,6 +929,7 @@
     ['f-term','f-trans','f-def','f-pos','f-tags'].forEach(id =>
       document.getElementById(id).value = '');
     renderTransAlts('f-trans-alts', 'f-trans', []);
+    renderTagSuggestions('f-tags', 'f-tag-sugs');
     pendingExamples = [];
     renderExamples();
     renderDefPicker('f-def-picker', 'f-def', 'f-pos', [], 0);
@@ -923,6 +937,31 @@
     refreshStats();
     renderTagChips();
     renderList();
+  }
+
+  /* ── Preset tag suggestions ─────────────── */
+  const PRESET_TAGS = [
+    'food','travel','family','home','work','health',
+    'nature','animals','shopping','emotions','clothes','sports',
+    'irregular','reflexive','idiom','false friend'
+  ];
+
+  function renderTagSuggestions(inputId, sugsDivId) {
+    const current = document.getElementById(inputId).value
+      .split(',').map(t => t.trim()).filter(Boolean);
+    document.getElementById(sugsDivId).innerHTML = PRESET_TAGS.map(t =>
+      `<button type="button" class="tag-sug-chip${current.includes(t) ? ' active' : ''}"
+        onclick="togglePresetTag('${inputId}','${sugsDivId}','${t}')">${esc(t)}</button>`
+    ).join('');
+  }
+
+  function togglePresetTag(inputId, sugsDivId, tag) {
+    const input = document.getElementById(inputId);
+    const tags  = input.value.split(',').map(t => t.trim()).filter(Boolean);
+    const idx   = tags.indexOf(tag);
+    if (idx === -1) tags.push(tag); else tags.splice(idx, 1);
+    input.value = tags.join(', ');
+    renderTagSuggestions(inputId, sugsDivId);
   }
 
   /* ── Translation alternatives ──────────── */
