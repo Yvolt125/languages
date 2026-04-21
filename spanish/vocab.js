@@ -223,19 +223,19 @@
       const provider = s.aiProvider || 'claude';
 
       const PROMPT =
-`You are a Spanish language expert. The Spanish word or phrase "${term}" may have multiple distinct meanings. Return ONLY a JSON array of 1–3 interpretations — no other text:
+`You are a Spanish language expert. For the Spanish word or phrase "${term}", return ONLY a JSON array — no other text. Include ALL distinct interpretations (aim for 2–3 when the word is in any way ambiguous):
 [
   {
     "translation": "English translation",
     "definition": "One sentence English definition",
-    "partOfSpeech": "noun/verb/adjective/adverb/phrase/interjection/etc",
+    "partOfSpeech": "noun/verb/adjective/adverb/interjection/onomatopoeia/etc",
     "examples": [
       { "es": "Natural Spanish sentence using the exact word/phrase.", "en": "English translation." },
       { "es": "Another natural example.", "en": "English translation." }
     ]
   }
 ]
-Include all distinct meanings (different parts of speech, idiomatic vs literal, formal vs slang). If the word has only one clear meaning, return a single-item array.`;
+Consider: different parts of speech, informal/slang vs formal, onomatopoeia vs literal, different grammatical forms with different meanings. When in doubt, include more interpretations rather than fewer.`;
 
       if (provider === 'gemini') {
         const key = s.geminiApiKey;
@@ -272,7 +272,7 @@ Include all distinct meanings (different parts of speech, idiomatic vs literal, 
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1200,
+          max_tokens: 1500,
           messages: [{ role: 'user', content: PROMPT }]
         })
       });
