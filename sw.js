@@ -3,7 +3,7 @@ const CACHE_NAME = 'accento-v1';
 const PRE_CACHE = [
   './index.html',
   './manifest.json',
-  './icon.svg',
+  './icon.png',
   './spanish/index.html',
   './spanish/flashcards.html',
   './spanish/lessons.html',
