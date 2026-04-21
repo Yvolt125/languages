@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Flashcards — Spanish</title>
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#1a252f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5;
+           min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: #1a252f; color: white;
+      padding: 14px 20px; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0;
+    }
+    .back { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em; }
+    .back:hover { color: white; }
+    .header-mode {
+      font-size: 0.75em; color: rgba(255,255,255,0.5);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .prog-text { font-size: 0.8em; color: rgba(255,255,255,0.6); }
+
+    .progress-bar { height: 5px; background: #2c3e50; flex-shrink: 0; }
+    .progress-fill { height: 100%; background: #c0392b; transition: width .35s; }
+
+    /* ── Screens ── */
+    .screen { flex: 1; display: none; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    .center-box {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 20px; gap: 14px; text-align: center;
+    }
+    .big-icon { font-size: 3.2em; }
+    .center-box h2 { font-size: 1.25em; font-weight: 800; color: #2c3e50; }
+    .center-box p  { font-size: 0.88em; color: #7f8c8d; max-width: 280px; line-height: 1.5; }
+    .btn-primary {
+      padding: 14px 36px; background: #c0392b; color: white; border: none;
+      border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer;
+    }
+    .btn-secondary {
+      padding: 12px 28px; background: #f0f2f5; color: #7f8c8d; border: none;
+      border-radius: 14px; font-size: 0.88em; cursor: pointer;
+      text-decoration: none; display: inline-block;
+    }
+
+    /* ── Card screen ── */
+    #screen-card {
+      padding: 16px 16px 20px; gap: 14px; align-items: stretch;
+    }
+
+    /* ── Mode banner ── */
+    .mode-banner {
+      display: none; background: #fef5e7; border-radius: 10px;
+      padding: 8px 14px; font-size: 0.8em; color: #e67e22; font-weight: 600;
+      text-align: center;
+    }
+    .mode-banner.visible { display: block; }
+
+    /* ── Flip card ── */
+    .flip-wrap { perspective: 1200px; min-height: 240px; flex: 1; }
+    .flip-inner {
+      width: 100%; height: 100%; min-height: 240px;
+      transform-style: preserve-3d;
+      transition: transform .42s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+    .flip-inner.flipped { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute; inset: 0; min-height: 240px;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      background: white; border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px 20px; cursor: pointer;
+    }
+    .card-back-face {
+      transform: rotateY(180deg);
+      justify-content: flex-start;
+      cursor: default;
+      border-top: 5px solid #c0392b;
+    }
+    .card-front-face { border-top: 5px solid #c0392b; }
+
+    /* Front */
+    .front-label  { font-size: 0.7em; font-weight: 700; text-transform: uppercase;
+                    letter-spacing: 1.5px; color: #bdc3c7; margin-bottom: 10px; }
+    .card-term    { font-size: 2.1em; font-weight: 800; color: #2c3e50; text-align: center; line-height: 1.2; }
+    .tap-hint     { font-size: 0.75em; color: #bdc3c7; margin-top: 14px; }
+    .btn-tts-front {
+      margin-top: 14px; background: #fdedec; border: none; border-radius: 50%;
+      width: 44px; height: 44px; font-size: 1.15em; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background .2s;
+    }
+    .btn-tts-front:hover { background: #f5b7b1; }
+
+    /* Back */
+    .back-translation { font-size: 1.65em; font-weight: 800; color: #c0392b;
+                        text-align: center; margin-bottom: 4px; }
+    .back-pos  { font-size: 0.72em; color: #bdc3c7; text-transform: uppercase;
+                 letter-spacing: 1px; margin-bottom: 12px; }
+    .back-def  { font-size: 0.86em; color: #7f8c8d; text-align: center; margin-bottom: 16px;
+                 line-height: 1.5; }
+    .back-example {
+      background: #f8f9fa; border-radius: 12px; padding: 12px 14px; width: 100%;
+    }
+    .ex-label { font-size: 0.65em; font-weight: 700; color: #bdc3c7; text-transform: uppercase;
+                letter-spacing: 1px; margin-bottom: 6px; }
+    .ex-es    { font-size: 0.88em; color: #2c3e50; font-style: italic; margin-bottom: 3px; }
+    .ex-en    { font-size: 0.78em; color: #7f8c8d; }
+    .btn-tts-ex {
+      margin-top: 8px; background: #fdedec; border: none; border-radius: 8px;
+      padding: 6px 12px; font-size: 0.78em; cursor: pointer; color: #c0392b; font-weight: 600;
+    }
+    .btn-tts-ex:hover { background: #f5b7b1; }
+
+    /* ── Grade area ── */
+    .grade-area { display: none; flex-direction: column; gap: 8px; }
+    .grade-area.visible { display: flex; }
+
+    .interval-hint {
+      text-align: center; font-size: 0.72em; color: #bdc3c7;
+      min-height: 16px; transition: opacity .3s;
+    }
+    .grade-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .btn-grade {
+      padding: 11px 4px; border: none; border-radius: 12px;
+      font-size: 0.8em; font-weight: 700; cursor: pointer; color: white;
+      transition: transform .1s;
+    }
+    .btn-grade:active { transform: scale(0.93); }
+    .btn-grade.again { background: #e74c3c; }
+    .btn-grade.hard  { background: #e67e22; }
+    .btn-grade.good  { background: #27ae60; }
+    .btn-grade.easy  { background: #2980b9; }
+    .grade-hint-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .grade-hint-cell {
+      text-align: center; font-size: 0.65em; color: #bdc3c7; padding: 0 4px;
+    }
+
+    /* ── Done screen ── */
+    .done-stats { display: flex; gap: 24px; justify-content: center; }
+    .ds-num { font-size: 2em; font-weight: 800; color: #c0392b; }
+    .ds-lbl { font-size: 0.75em; color: #7f8c8d; margin-top: 2px; }
+    .ds     { text-align: center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="index.html">← Spanish</a>
+  <span class="header-mode" id="header-mode"></span>
+  <span class="prog-text"   id="prog-text"></span>
+</header>
+<div class="progress-bar">
+  <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+</div>
+
+<!-- Start screen -->
+<div class="screen active" id="screen-start">
+  <div class="center-box">
+    <div class="big-icon">🃏</div>
+    <h2 id="start-title">Ready to review?</h2>
+    <p  id="start-sub">Loading…</p>
+    <button class="btn-primary" id="btn-start" onclick="startSession()">Start</button>
+    <a class="btn-secondary" href="index.html">Back</a>
+  </div>
+</div>
+
+<!-- Card screen -->
+<div class="screen" id="screen-card">
+
+  <div class="mode-banner" id="mode-banner">💪 Weak Words Mode — drilling words you've been getting wrong</div>
+
+  <div class="flip-wrap">
+    <div class="flip-inner" id="flip-inner" onclick="revealCard()">
+
+      <!-- Front -->
+      <div class="card-face card-front-face">
+        <div class="front-label">Spanish</div>
+        <div class="card-term" id="card-term"></div>
+        <div class="tap-hint">tap to reveal</div>
+        <button class="btn-tts-front" id="btn-tts-f" style="display:none"
+                onclick="event.stopPropagation(); VS.speak(currentCard.term)">🔊</button>
+      </div>
+
+      <!-- Back -->
+      <div class="card-face card-back-face" onclick="void(0)">
+        <div class="back-translation" id="back-trans"></div>
+        <div class="back-pos"         id="back-pos"></div>
+        <div class="back-def"         id="back-def"></div>
+        <div class="back-example" id="back-example" style="display:none">
+          <div class="ex-label">Example</div>
+          <div class="ex-es" id="ex-es"></div>
+          <div class="ex-en" id="ex-en"></div>
+          <button class="btn-tts-ex" id="btn-tts-ex" style="display:none"
+                  onclick="VS.speak(currentExample)">🔊 Hear it</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="grade-area" id="grade-area">
+    <div class="interval-hint" id="interval-hint"></div>
+    <div class="grade-row">
+      <button class="btn-grade again" onclick="grade(0)">Again</button>
+      <button class="btn-grade hard"  onclick="grade(1)">Hard</button>
+      <button class="btn-grade good"  onclick="grade(2)">Good</button>
+      <button class="btn-grade easy"  onclick="grade(3)">Easy</button>
+    </div>
+    <div class="grade-hint-row">
+      <div class="grade-hint-cell">&lt;1 day</div>
+      <div class="grade-hint-cell" id="hint-hard">–</div>
+      <div class="grade-hint-cell" id="hint-good">–</div>
+      <div class="grade-hint-cell" id="hint-easy">–</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Done screen -->
+<div class="screen" id="screen-done">
+  <div class="center-box">
+    <div class="big-icon">🎉</div>
+    <h2>Session done!</h2>
+    <div class="done-stats">
+      <div class="ds"><div class="ds-num" id="done-total">0</div><div class="ds-lbl">Reviewed</div></div>
+      <div class="ds"><div class="ds-num" id="done-again">0</div><div class="ds-lbl">Again</div></div>
+      <div class="ds"><div class="ds-num" id="done-easy">0</div><div class="ds-lbl">Easy</div></div>
+    </div>
+    <button class="btn-primary" onclick="restartSession()">More cards</button>
+    <a class="btn-secondary" href="index.html">Back to Hub</a>
+  </div>
+</div>
+
+<script src="vocab.js"></script>
+<script>
+  const params   = new URLSearchParams(location.search);
+  const weakMode = params.get('mode') === 'weak';
+
+  let queue = [], current = 0, againCount = 0, easyCount = 0;
+  let currentCard = null, currentExample = '';
+
+  /* ── Init ─────────────────────────────── */
+  function getQueue() {
+    return weakMode ? VS.getWeak(50) : VS.getDue(50);
+  }
+
+  function initStart() {
+    const q = getQueue();
+    document.getElementById('header-mode').textContent = weakMode ? '💪 Weak Words' : '';
+
+    if (!q.length) {
+      document.getElementById('start-title').textContent =
+        weakMode ? 'No weak words! 🌟' : 'All caught up! 🌟';
+      document.getElementById('start-sub').textContent =
+        weakMode
+          ? 'You have no words marked as struggling. Do some lessons first.'
+          : 'No cards are due right now. Try a lesson to mark new words.';
+      document.getElementById('btn-start').textContent = 'Back';
+      document.getElementById('btn-start').onclick = () => location.href = 'index.html';
+    } else {
+      document.getElementById('start-title').textContent =
+        weakMode ? `${q.length} word${q.length > 1 ? 's' : ''} to drill` : 'Ready to review?';
+      document.getElementById('start-sub').textContent =
+        weakMode
+          ? 'These are words you\'ve been getting wrong in lessons. Let\'s fix that.'
+          : `${q.length} card${q.length > 1 ? 's' : ''} due for review · grade yourself honestly`;
+    }
+  }
+
+  function startSession() {
+    queue = getQueue();
+    if (!queue.length) { location.href = 'index.html'; return; }
+    current = 0; againCount = 0; easyCount = 0;
+    showScreen('screen-card');
+    if (weakMode) document.getElementById('mode-banner').classList.add('visible');
+    showCard();
+  }
+
+  /* ── Card flow ───────────────────────── */
+  function showCard() {
+    if (current >= queue.length) { showDone(); return; }
+    currentCard = queue[current];
+
+    document.getElementById('flip-inner').classList.remove('flipped');
+    document.getElementById('grade-area').classList.remove('visible');
+    document.getElementById('interval-hint').textContent = '';
+
+    document.getElementById('card-term').textContent = currentCard.term;
+
+    if (VS.hasTTS()) document.getElementById('btn-tts-f').style.display = '';
+    else             document.getElementById('btn-tts-f').style.display = 'none';
+
+    document.getElementById('back-trans').textContent = currentCard.translation || '';
+    document.getElementById('back-pos').textContent   = currentCard.partOfSpeech || '';
+    document.getElementById('back-def').textContent   = currentCard.definition   || '';
+
+    const exEl = document.getElementById('back-example');
+    if (currentCard.examples && currentCard.examples.length) {
+      const ex = currentCard.examples[0];
+      currentExample = ex.es;
+      document.getElementById('ex-es').textContent = ex.es;
+      document.getElementById('ex-en').textContent = ex.en || '';
+      exEl.style.display = '';
+      document.getElementById('btn-tts-ex').style.display = VS.hasTTS() ? '' : 'none';
+    } else {
+      exEl.style.display = 'none';
+    }
+
+    // Show interval previews
+    updateIntervalHints(currentCard);
+    updateProgress();
+  }
+
+  function updateIntervalHints(card) {
+    const grades = [1, 2, 3]; // Hard, Good, Easy
+    const ids    = ['hint-hard', 'hint-good', 'hint-easy'];
+    grades.forEach((g, i) => {
+      const updated = VS.applyGrade(card, g);
+      document.getElementById(ids[i]).textContent = VS.intervalLabel(updated);
+    });
+  }
+
+  function revealCard() {
+    if (document.getElementById('flip-inner').classList.contains('flipped')) return;
+    document.getElementById('flip-inner').classList.add('flipped');
+    document.getElementById('grade-area').classList.add('visible');
+    if (VS.hasTTS()) VS.speak(currentCard.term);
+  }
+
+  function grade(g) {
+    const updated = VS.applyGrade(currentCard, g);
+    VS.update(updated.id, updated);
+
+    if (g === 0) {
+      againCount++;
+      // Re-insert ~3 cards later for another pass this session
+      queue.splice(Math.min(current + 3, queue.length), 0, { ...updated });
+    }
+    if (g === 3) easyCount++;
+
+    current++;
+    showCard();
+  }
+
+  function updateProgress() {
+    const total = queue.length;
+    const pct   = total ? Math.round(current / total * 100) : 100;
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-text').textContent = `${current} / ${total}`;
+  }
+
+  /* ── Done ────────────────────────────── */
+  function showDone() {
+    document.getElementById('done-total').textContent = current;
+    document.getElementById('done-again').textContent = againCount;
+    document.getElementById('done-easy').textContent  = easyCount;
+    showScreen('screen-done');
+  }
+
+  function restartSession() {
+    showScreen('screen-start');
+    initStart();
+  }
+
+  /* ── Util ────────────────────────────── */
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+  initStart();
+</script>
+</body>
+</html>

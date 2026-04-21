@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spanish — Study Hub</title>
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#1a252f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="../icon.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: #1a252f; color: white;
+      padding: 20px 20px 16px; position: relative; text-align: center;
+    }
+    header h1 { font-size: 1.3em; letter-spacing: 2px; text-transform: uppercase; }
+    header p  { font-size: 0.78em; opacity: 0.55; margin-top: 3px; }
+    .back {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em;
+    }
+    .back:hover { color: white; }
+    .btn-settings {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: rgba(255,255,255,0.7);
+      font-size: 1.2em; cursor: pointer; padding: 4px;
+    }
+    .btn-settings:hover { color: white; }
+
+    /* ── Daily summary bar ── */
+    .summary-bar {
+      background: #c0392b; color: white;
+      display: flex; justify-content: center; gap: 0;
+    }
+    .sum-item {
+      flex: 1; max-width: 110px; text-align: center;
+      padding: 12px 8px; border-right: 1px solid rgba(255,255,255,0.15);
+    }
+    .sum-item:last-child { border-right: none; }
+    .sum-num { font-size: 1.5em; font-weight: 800; line-height: 1; }
+    .sum-lbl { font-size: 0.7em; opacity: 0.78; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── Main ── */
+    .main { max-width: 600px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* ── Section label ── */
+    .sec-label {
+      font-size: 0.68em; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 2px; color: #7f8c8d; margin-bottom: 10px; margin-top: 24px;
+    }
+    .sec-label:first-child { margin-top: 0; }
+
+    /* ── Study cards ── */
+    .study-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+    .study-card {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 20px; border-radius: 16px; text-decoration: none; color: inherit;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: transform .15s, box-shadow .15s;
+      border-left: 5px solid transparent; background: white;
+    }
+    .study-card:active { transform: scale(0.98); }
+    .study-card:hover  { box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .study-card.flash  { border-left-color: #c0392b; }
+    .study-card.lesson { border-left-color: #2980b9; }
+    .study-card.weak   { border-left-color: #e67e22; }
+    .study-card.disabled { opacity: 0.45; pointer-events: none; }
+
+    .sc-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5em; flex-shrink: 0;
+    }
+    .flash  .sc-icon { background: #fdedec; }
+    .lesson .sc-icon { background: #eaf4fb; }
+    .weak   .sc-icon { background: #fef5e7; }
+
+    .sc-text { flex: 1; }
+    .sc-title { font-weight: 700; color: #2c3e50; font-size: 0.95em; }
+    .sc-sub   { font-size: 0.78em; color: #7f8c8d; margin-top: 2px; }
+    .sc-badge {
+      font-size: 0.72em; font-weight: 700; padding: 4px 10px;
+      border-radius: 12px; flex-shrink: 0;
+    }
+    .flash  .sc-badge { background: #fdedec; color: #c0392b; }
+    .lesson .sc-badge { background: #eaf4fb; color: #2980b9; }
+    .weak   .sc-badge { background: #fef5e7; color: #e67e22; }
+
+    /* ── Add word panel ── */
+    .add-panel {
+      background: white; border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07); overflow: hidden;
+    }
+    .add-toggle {
+      width: 100%; background: none; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; font-size: 0.92em; font-weight: 700; color: #2c3e50;
+    }
+    .add-toggle .chevron { transition: transform .2s; color: #bdc3c7; font-size: 0.85em; }
+    .add-toggle.open .chevron { transform: rotate(180deg); }
+    .add-form { display: none; padding: 0 20px 20px; border-top: 1px solid #f0f2f5; }
+    .add-form.open { display: block; }
+
+    .form-row { display: flex; gap: 10px; }
+    .form-group { margin-bottom: 12px; flex: 1; }
+    label { display: block; font-size: 0.72em; font-weight: 700; color: #7f8c8d;
+            text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+    input[type=text], input[type=password], textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #e1e8ed;
+      border-radius: 10px; font-size: 0.92em; font-family: inherit;
+      outline: none; transition: border-color .2s; background: white;
+    }
+    input:focus, textarea:focus { border-color: #c0392b; }
+    textarea { resize: vertical; min-height: 56px; }
+
+    .gen-row { display: flex; gap: 8px; align-items: flex-end; padding-top: 4px; margin-bottom: 12px; }
+    .gen-row > div { flex: 1; }
+    .btn-gen {
+      padding: 10px 14px; background: #c0392b; color: white; border: none;
+      border-radius: 10px; font-size: 0.83em; font-weight: 700; cursor: pointer;
+      white-space: nowrap; transition: opacity .2s; flex-shrink: 0; height: 40px;
+    }
+    .btn-gen:hover { opacity: 0.88; }
+    .btn-gen:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-autofill {
+      padding: 10px 14px; background: #f0f2f5; color: #2c3e50; border: 1.5px solid #e1e8ed;
+      border-radius: 10px; font-size: 0.83em; font-weight: 700; cursor: pointer;
+      white-space: nowrap; transition: background .2s; flex-shrink: 0; height: 40px;
+    }
+    .btn-autofill:hover { background: #e1e8ed; }
+    .btn-autofill:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .gen-msg { font-size: 0.8em; margin-bottom: 10px; min-height: 18px; }
+    .gen-msg.ok  { color: #27ae60; }
+    .gen-msg.err { color: #e74c3c; }
+
+    .example-list { list-style: none; margin-bottom: 8px; }
+    .example-item {
+      background: #f8f9fa; border-radius: 8px; padding: 8px 36px 8px 12px;
+      margin-bottom: 6px; font-size: 0.84em; position: relative;
+    }
+    .example-item .ex-es { color: #2c3e50; font-weight: 600; }
+    .example-item .ex-en { color: #7f8c8d; margin-top: 2px; }
+    .btn-del-ex {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: #bdc3c7; cursor: pointer; font-size: 1em; line-height: 1;
+    }
+    .btn-del-ex:hover { color: #e74c3c; }
+
+    .ex-input-row { display: flex; gap: 8px; margin-bottom: 6px; }
+    .ex-input-row input { flex: 1; }
+    .btn-add-ex {
+      padding: 7px 14px; background: #f0f2f5; border: none; border-radius: 8px;
+      font-size: 0.82em; cursor: pointer; color: #2c3e50; font-weight: 600;
+    }
+    .btn-add-ex:hover { background: #e1e8ed; }
+
+    .btn-save {
+      width: 100%; padding: 13px; background: #c0392b; color: white; border: none;
+      border-radius: 12px; font-size: 0.95em; font-weight: 700; cursor: pointer;
+      margin-top: 4px; transition: opacity .2s;
+    }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* ── Vocab list ── */
+    .list-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin-bottom: 10px;
+    }
+    #search {
+      padding: 8px 12px; border: 1.5px solid #e1e8ed; border-radius: 10px;
+      font-size: 0.85em; width: 160px; outline: none;
+    }
+    #search:focus { border-color: #c0392b; }
+    .sort-btn {
+      background: none; border: 1.5px solid #e1e8ed; border-radius: 10px;
+      padding: 6px 10px; font-size: 0.75em; cursor: pointer; color: #7f8c8d;
+      white-space: nowrap;
+    }
+    .sort-btn.active { border-color: #c0392b; color: #c0392b; background: #fdedec; }
+
+    .vocab-list { display: flex; flex-direction: column; gap: 8px; }
+    .vocab-card {
+      background: white; border-radius: 12px; padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #e1e8ed;
+    }
+    .vocab-card.is-weak  { border-left-color: #e67e22; }
+    .vocab-card.is-due   { border-left-color: #c0392b; }
+    .vocab-card.is-new   { border-left-color: #2980b9; }
+    .vocab-card.is-ok    { border-left-color: #27ae60; }
+
+    .vocab-meta { flex: 1; min-width: 0; }
+    .vocab-term  { font-weight: 700; color: #2c3e50; font-size: 0.93em; }
+    .vocab-trans { font-size: 0.8em; color: #7f8c8d; }
+    .vocab-pos   { font-size: 0.7em; color: #bdc3c7; text-transform: uppercase; letter-spacing: .5px; }
+
+    .vocab-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .due-pill {
+      font-size: 0.68em; font-weight: 700; padding: 3px 8px;
+      border-radius: 10px; white-space: nowrap;
+    }
+    .pill-due    { background: #fdedec; color: #c0392b; }
+    .pill-new    { background: #eaf4fb; color: #2980b9; }
+    .pill-ok     { background: #eafaf1; color: #27ae60; }
+    .pill-weak   { background: #fef5e7; color: #e67e22; }
+
+    .wrong-count {
+      font-size: 0.7em; color: #e67e22; font-weight: 700;
+    }
+    .vocab-actions { display: flex; gap: 4px; }
+    .btn-icon-sm {
+      background: none; border: none; cursor: pointer; padding: 4px;
+      font-size: 1em; opacity: 0.4; transition: opacity .15s; line-height: 1;
+    }
+    .btn-icon-sm:hover { opacity: 1; }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: #bdc3c7; font-size: 0.9em; line-height: 1.8;
+    }
+    .empty-state strong { color: #7f8c8d; display: block; margin-bottom: 4px; font-size: 1.05em; }
+
+    /* ── Settings modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white; border-radius: 20px; padding: 28px 24px;
+      width: min(420px, calc(100vw - 32px)); box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    }
+    .modal h2 { font-size: 1.05em; margin-bottom: 4px; }
+    .modal .modal-sub { font-size: 0.82em; color: #7f8c8d; margin-bottom: 18px; line-height: 1.5; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f0f2f5; color: #7f8c8d; border: none; border-radius: 12px; font-size: 0.9em; cursor: pointer; }
+    .btn-ok     { flex: 2; padding: 12px; background: #c0392b; color: white; border: none; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; }
+    .key-hint   { font-size: 0.72em; color: #bdc3c7; margin-top: 4px; }
+    .provider-btn {
+      flex: 1; padding: 9px; background: #f0f2f5; border: 2px solid #e1e8ed;
+      border-radius: 10px; font-size: 0.88em; font-weight: 700; cursor: pointer; color: #7f8c8d;
+    }
+    .provider-btn.active { border-color: #c0392b; color: #c0392b; background: #fdedec; }
+
+    /* ── Import ── */
+    .btn-import {
+      padding: 6px 14px; background: #f0f2f5; border: 1.5px solid #e1e8ed;
+      border-radius: 10px; font-size: 0.78em; font-weight: 700; cursor: pointer;
+      color: #2c3e50; transition: background .15s; white-space: nowrap;
+    }
+    .btn-import:hover { background: #e1e8ed; }
+    .add-vocab-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 28px; margin-bottom: 10px;
+    }
+    .add-vocab-head .sec-label { margin: 0; }
+    .import-drop {
+      border: 2px dashed #e1e8ed; border-radius: 12px; padding: 28px 20px;
+      text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+      color: #7f8c8d; font-size: 0.88em; line-height: 1.8;
+    }
+    .import-drop:hover, .import-drop.drag-over { border-color: #c0392b; background: rgba(192,57,43,0.04); }
+    .import-drop strong { display: block; font-size: 1em; color: #2c3e50; margin-bottom: 2px; }
+    .import-preview { overflow-x: auto; margin-top: 14px; border: 1px solid #e1e8ed; border-radius: 10px; }
+    .import-preview table { width: 100%; border-collapse: collapse; font-size: 0.8em; min-width: 280px; }
+    .import-preview th { padding: 7px 10px; color: #7f8c8d; font-weight: 700; text-transform: uppercase; font-size: 0.75em; border-bottom: 1px solid #e1e8ed; text-align: left; background: #f8f9fa; }
+    .import-preview td { padding: 6px 10px; color: #2c3e50; border-bottom: 1px solid #f0f2f5; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .import-preview tr:last-child td { border-bottom: none; }
+    .col-map-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .col-map-row label { font-size: 0.75em; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: .5px; width: 110px; flex-shrink: 0; margin: 0; }
+    .col-map-row select { flex: 1; padding: 7px 10px; border: 1.5px solid #e1e8ed; border-radius: 8px; font-size: 0.85em; font-family: inherit; outline: none; background: white; }
+    .col-map-row select:focus { border-color: #c0392b; }
+    .modal.wide { width: min(500px, calc(100vw - 32px)); }
+    .import-has-header-row { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 0.85em; color: #2c3e50; cursor: pointer; font-weight: normal; text-transform: none; letter-spacing: 0; }
+    .import-has-header-row input { cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="../index.html">← Languages</a>
+  <h1>Spanish</h1>
+  <p>Vocabulary · Flashcards · Lessons</p>
+  <button class="btn-settings" onclick="openSettings()" title="Settings">⚙️</button>
+</header>
+
+<div class="summary-bar">
+  <div class="sum-item"><div class="sum-num" id="stat-total">0</div><div class="sum-lbl">Words</div></div>
+  <div class="sum-item"><div class="sum-num" id="stat-due">0</div><div class="sum-lbl">Due</div></div>
+  <div class="sum-item"><div class="sum-num" id="stat-new">0</div><div class="sum-lbl">New</div></div>
+  <div class="sum-item"><div class="sum-num" id="stat-weak">0</div><div class="sum-lbl">Struggling</div></div>
+</div>
+
+<div class="main">
+
+  <div class="sec-label">Study</div>
+  <div class="study-grid">
+
+    <a class="study-card flash" id="card-flash" href="flashcards.html">
+      <div class="sc-icon">🃏</div>
+      <div class="sc-text">
+        <div class="sc-title">Flashcard Review</div>
+        <div class="sc-sub">Spaced repetition · flip to reveal · grade yourself</div>
+      </div>
+      <span class="sc-badge" id="badge-flash">0 due</span>
+    </a>
+
+    <a class="study-card lesson" id="card-lesson" href="lessons.html">
+      <div class="sc-icon">🎯</div>
+      <div class="sc-text">
+        <div class="sc-title">Lesson</div>
+        <div class="sc-sub">Multiple choice · fill-in-the-blank · wrong answers feed into flashcards</div>
+      </div>
+      <span class="sc-badge" id="badge-lesson">Quiz</span>
+    </a>
+
+    <a class="study-card weak" id="card-weak" href="flashcards.html?mode=weak">
+      <div class="sc-icon">💪</div>
+      <div class="sc-text">
+        <div class="sc-title">Weak Words</div>
+        <div class="sc-sub">Words you've been getting wrong — drill these</div>
+      </div>
+      <span class="sc-badge" id="badge-weak">0 words</span>
+    </a>
+
+  </div>
+
+  <!-- Add word -->
+  <div class="add-vocab-head">
+    <div class="sec-label">Add Vocabulary</div>
+    <button class="btn-import" onclick="openImport()">⬆ Import file</button>
+  </div>
+  <div class="add-panel">
+    <button class="add-toggle" id="add-toggle" onclick="toggleAdd()">
+      <span>＋ New word or phrase</span>
+      <span class="chevron">▾</span>
+    </button>
+    <div class="add-form" id="add-form">
+
+      <div class="gen-row">
+        <div>
+          <label>Spanish Word / Phrase</label>
+          <input id="f-term" type="text" placeholder="e.g. hablar" autocomplete="off" spellcheck="false">
+        </div>
+        <button class="btn-autofill" id="btn-autofill" onclick="doAutoFill()">🔤 Auto-fill</button>
+        <button class="btn-gen" id="btn-gen" onclick="doGenerate()">✨ Generate</button>
+      </div>
+
+      <div class="gen-msg" id="gen-msg"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>English Translation</label>
+          <input id="f-trans" type="text" placeholder="to speak">
+        </div>
+        <div class="form-group" style="max-width:130px">
+          <label>Part of Speech</label>
+          <input id="f-pos" type="text" placeholder="verb">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Definition <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+        <textarea id="f-def" placeholder="Brief English definition…" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Example Sentences</label>
+        <ul class="example-list" id="example-list"></ul>
+        <div class="ex-input-row">
+          <input id="f-ex-es" type="text" placeholder="Spanish sentence…">
+        </div>
+        <button class="btn-add-ex" onclick="addExample()">+ Add sentence</button>
+      </div>
+
+      <button class="btn-save" onclick="saveWord()">Save Word</button>
+    </div>
+  </div>
+
+  <!-- Vocab list -->
+  <div class="sec-label" style="margin-top:28px">Your Vocabulary</div>
+  <div class="list-head">
+    <input id="search" type="text" placeholder="Search…" oninput="renderList()" autocomplete="off">
+    <div style="display:flex;gap:6px">
+      <button class="sort-btn active" id="sort-recent"   onclick="setSort('recent')">Recent</button>
+      <button class="sort-btn"        id="sort-due"      onclick="setSort('due')">Due</button>
+      <button class="sort-btn"        id="sort-weak"     onclick="setSort('weak')">Weakest</button>
+    </div>
+  </div>
+  <div class="vocab-list" id="vocab-list"></div>
+
+</div>
+
+<!-- Import modal -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal wide">
+    <h2>Import Vocabulary</h2>
+    <p class="modal-sub">Import words from Excel (.xlsx · .xls), CSV, or TSV. Each row becomes one vocab card.</p>
+
+    <div id="import-drop-area" class="import-drop"
+         onclick="document.getElementById('import-file').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="event.preventDefault();this.classList.remove('drag-over');handleImportFile(event.dataTransfer.files[0])">
+      <strong>Click to choose a file, or drag &amp; drop</strong>
+      Excel (.xlsx · .xls) &nbsp;·&nbsp; CSV &nbsp;·&nbsp; TSV
+    </div>
+    <input type="file" id="import-file" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none"
+           onchange="handleImportFile(this.files[0])">
+
+    <div id="import-preview-area" style="display:none">
+      <div class="import-preview" id="import-table"></div>
+      <div style="font-size:0.72em;color:#bdc3c7;margin-top:4px;margin-left:2px">Preview · first 5 rows</div>
+
+      <label class="import-has-header-row">
+        <input type="checkbox" id="import-has-header" checked onchange="updateImportCount()">
+        First row is a header — skip it when importing
+      </label>
+
+      <div style="margin-top:14px">
+        <div class="col-map-row">
+          <label>Spanish *</label>
+          <select id="col-spanish" onchange="updateImportCount()"></select>
+        </div>
+        <div class="col-map-row">
+          <label>English</label>
+          <select id="col-english" onchange="updateImportCount()"></select>
+        </div>
+        <div class="col-map-row">
+          <label>Part of Speech</label>
+          <select id="col-pos" onchange="updateImportCount()"></select>
+        </div>
+        <div class="col-map-row">
+          <label>Definition</label>
+          <select id="col-def" onchange="updateImportCount()"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeImport()">Cancel</button>
+      <button class="btn-ok" id="btn-do-import" style="display:none" onclick="doImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings modal -->
+<!-- Edit word modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal wide">
+    <h2>Edit Word</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Spanish Term</label>
+        <input id="e-term" type="text" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="form-group" style="max-width:130px">
+        <label>Part of Speech</label>
+        <input id="e-pos" type="text" placeholder="verb">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>English Translation</label>
+      <input id="e-trans" type="text">
+    </div>
+    <div class="form-group">
+      <label>Definition <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <textarea id="e-def" rows="2"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn-autofill" id="e-btn-autofill" onclick="editAutoFill()" style="flex:1">🔤 Auto-fill</button>
+      <button class="btn-gen"      id="e-btn-gen"      onclick="editGenerate()"  style="flex:1">✨ Generate</button>
+    </div>
+    <div class="gen-msg" id="e-gen-msg"></div>
+    <div class="form-group">
+      <label>Example Sentences</label>
+      <ul class="example-list" id="e-example-list"></ul>
+      <div class="ex-input-row">
+        <input id="e-ex-es" type="text" placeholder="Spanish sentence…">
+      </div>
+      <button class="btn-add-ex" onclick="editAddExample()">+ Add sentence</button>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
+      <button class="btn-ok"     onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <h2>⚙️ Settings</h2>
+    <p class="modal-sub">Add your API key(s) to enable ✨ Generate. Keys are stored only in this browser.</p>
+    <label style="margin-bottom:8px;display:block">AI Provider</label>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="provider-btn" id="prov-claude" onclick="selectProvider('claude')">Claude</button>
+      <button class="provider-btn" id="prov-gemini" onclick="selectProvider('gemini')">Gemini</button>
+    </div>
+    <label>Claude API Key</label>
+    <input id="claude-key-input" type="password" placeholder="sk-ant-…" autocomplete="off" style="margin-bottom:6px">
+    <div class="key-hint" style="margin-bottom:14px">console.anthropic.com · Claude Haiku</div>
+    <label>Gemini API Key</label>
+    <input id="gemini-key-input" type="password" placeholder="AIza…" autocomplete="off" style="margin-bottom:6px">
+    <div class="key-hint">aistudio.google.com · Gemini 2.0 Flash</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
+      <button class="btn-ok"     onclick="saveApiKey()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="vocab.js"></script>
+<script>
+  let pendingExamples = [];
+  let sortMode = 'recent';
+
+  /* ── Init ────────────────────────────── */
+  function init() {
+    refreshStats();
+    renderList();
+  }
+
+  function refreshStats() {
+    const s = VS.getStats();
+    document.getElementById('stat-total').textContent = s.total;
+    document.getElementById('stat-due').textContent   = s.due;
+    document.getElementById('stat-new').textContent   = s.isNew;
+    document.getElementById('stat-weak').textContent  = s.weak;
+
+    document.getElementById('badge-flash').textContent = s.due + ' due';
+    document.getElementById('badge-lesson').textContent =
+      s.total >= 4 ? s.total + ' words' : 'Need 4+ words';
+    document.getElementById('badge-weak').textContent =
+      s.weak + (s.weak === 1 ? ' word' : ' words');
+
+    // Disable cards if not enough words
+    const lessonCard = document.getElementById('card-lesson');
+    const weakCard   = document.getElementById('card-weak');
+    lessonCard.classList.toggle('disabled', s.total < 4);
+    weakCard.classList.toggle('disabled',   s.weak === 0);
+  }
+
+  /* ── Sort ────────────────────────────── */
+  function setSort(mode) {
+    sortMode = mode;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sort-' + mode).classList.add('active');
+    renderList();
+  }
+
+  /* ── Vocab list ──────────────────────── */
+  function renderList() {
+    const q   = (document.getElementById('search').value || '').toLowerCase().trim();
+    let words = VS.getAll().filter(w =>
+      !q || w.term.toLowerCase().includes(q) || w.translation.toLowerCase().includes(q)
+    );
+
+    if      (sortMode === 'recent') words.sort((a, b) => b.created - a.created);
+    else if (sortMode === 'due')    words.sort((a, b) => (a.nextReview||0) - (b.nextReview||0));
+    else if (sortMode === 'weak')   words.sort((a, b) => (b.lessonWrong||0) - (a.lessonWrong||0));
+
+    const el  = document.getElementById('vocab-list');
+    const now = Date.now();
+
+    if (!words.length) {
+      el.innerHTML = q
+        ? '<div class="empty-state">No matches found.</div>'
+        : `<div class="empty-state">
+            <strong>No words yet</strong>
+            Use "New word or phrase" above to add your first word,<br>
+            or hit ✨ Generate to have AI fill in the details.
+           </div>`;
+      return;
+    }
+
+    el.innerHTML = words.map(w => {
+      const due      = !w.lastReview || (w.nextReview || 0) <= now;
+      const isNew    = !w.lastReview;
+      const isWeak   = (w.lessonWrong || 0) > 0;
+      const daysLeft = w.lastReview ? Math.max(0, Math.round((w.nextReview - now) / 86400000)) : 0;
+
+      let cardClass = 'vocab-card';
+      let pill = '', pillClass = '';
+
+      if (isWeak) {
+        cardClass += ' is-weak';
+        pill = '⚠ Struggling'; pillClass = 'pill-weak';
+      } else if (isNew) {
+        cardClass += ' is-new';
+        pill = 'New'; pillClass = 'pill-new';
+      } else if (due) {
+        cardClass += ' is-due';
+        pill = 'Due now'; pillClass = 'pill-due';
+      } else {
+        cardClass += ' is-ok';
+        pill = daysLeft === 1 ? '1 day' : daysLeft + 'd'; pillClass = 'pill-ok';
+      }
+
+      const wrongBadge = isWeak
+        ? `<span class="wrong-count">✗ ${w.lessonWrong}</span>` : '';
+
+      const ttsBtn = VS.hasTTS()
+        ? `<button class="btn-icon-sm" onclick="VS.speak('${esc(w.term)}')" title="Listen">🔊</button>` : '';
+
+      return `<div class="${cardClass}">
+        <div class="vocab-meta">
+          <div class="vocab-term">${esc(w.term)}</div>
+          <div class="vocab-trans">${esc(w.translation)}</div>
+          ${w.partOfSpeech ? `<div class="vocab-pos">${esc(w.partOfSpeech)}</div>` : ''}
+        </div>
+        <div class="vocab-right">
+          ${wrongBadge}
+          <span class="due-pill ${pillClass}">${pill}</span>
+          <div class="vocab-actions">
+            ${ttsBtn}
+            <button class="btn-icon-sm" onclick="openEdit('${w.id}')" title="Edit">✏️</button>
+            <button class="btn-icon-sm" onclick="removeWord('${w.id}')" title="Delete">🗑</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function removeWord(id) {
+    if (!confirm('Remove this word?')) return;
+    VS.remove(id);
+    refreshStats();
+    renderList();
+  }
+
+  /* ── Edit word ───────────────────────── */
+  let editId = null, editExamples = [];
+
+  function openEdit(id) {
+    const w = VS.getAll().find(x => x.id === id);
+    if (!w) return;
+    editId       = id;
+    editExamples = (w.examples || []).map(e => ({ ...e }));
+    document.getElementById('e-term').value  = w.term;
+    document.getElementById('e-trans').value = w.translation;
+    document.getElementById('e-pos').value   = w.partOfSpeech || '';
+    document.getElementById('e-def').value   = w.definition   || '';
+    renderEditExamples();
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeEdit() {
+    document.getElementById('edit-modal').classList.remove('open');
+    editId = null; editExamples = [];
+  }
+
+  function editAddExample() {
+    const es = document.getElementById('e-ex-es').value.trim();
+    if (!es) return;
+    editExamples.push({ es });
+    document.getElementById('e-ex-es').value = '';
+    renderEditExamples();
+  }
+
+  function renderEditExamples() {
+    document.getElementById('e-example-list').innerHTML = editExamples.map((ex, i) =>
+      `<li class="example-item">
+        <div class="ex-es">${esc(ex.es)}</div>
+        ${ex.en ? `<div class="ex-en">${esc(ex.en)}</div>` : ''}
+        <button class="btn-del-ex" onclick="editRemoveExample(${i})">✕</button>
+      </li>`
+    ).join('');
+  }
+
+  function editRemoveExample(i) {
+    editExamples.splice(i, 1);
+    renderEditExamples();
+  }
+
+  function saveEdit() {
+    const term  = document.getElementById('e-term').value.trim();
+    const trans = document.getElementById('e-trans').value.trim();
+    if (!term || !trans) { alert('Term and translation are required.'); return; }
+    VS.update(editId, {
+      term,
+      translation:  trans,
+      partOfSpeech: document.getElementById('e-pos').value.trim(),
+      definition:   document.getElementById('e-def').value.trim(),
+      examples:     editExamples.slice()
+    });
+    closeEdit();
+    refreshStats();
+    renderList();
+  }
+
+  function setEditMsg(type, msg) {
+    const el = document.getElementById('e-gen-msg');
+    el.className = 'gen-msg' + (type ? ' ' + type : '');
+    el.textContent = msg;
+  }
+
+  async function editAutoFill() {
+    const term = document.getElementById('e-term').value.trim();
+    if (!term) { alert('Fill in the Spanish term first.'); return; }
+    const btn = document.getElementById('e-btn-autofill');
+    btn.disabled = true; btn.textContent = '⏳';
+    setEditMsg('', '');
+    try {
+      const data = await VS.autoFill(term);
+      if (data.translation)  document.getElementById('e-trans').value = data.translation;
+      if (data.definition)   document.getElementById('e-def').value   = data.definition;
+      if (data.partOfSpeech) document.getElementById('e-pos').value   = data.partOfSpeech;
+      if (data.examples?.length) { editExamples = data.examples; renderEditExamples(); }
+      setEditMsg('ok', '✅ Filled in — review and save.');
+    } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
+    btn.disabled = false; btn.textContent = '🔤 Auto-fill';
+  }
+
+  async function editGenerate() {
+    const term = document.getElementById('e-term').value.trim();
+    if (!term) { alert('Fill in the Spanish term first.'); return; }
+    const btn = document.getElementById('e-btn-gen');
+    btn.disabled = true; btn.textContent = '⏳';
+    setEditMsg('', '');
+    try {
+      const data = await VS.generate(term);
+      if (data.translation)  document.getElementById('e-trans').value = data.translation;
+      if (data.definition)   document.getElementById('e-def').value   = data.definition;
+      if (data.partOfSpeech) document.getElementById('e-pos').value   = data.partOfSpeech;
+      if (data.examples?.length) { editExamples = data.examples; renderEditExamples(); }
+      setEditMsg('ok', '✅ Generated — review and save.');
+    } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
+    btn.disabled = false; btn.textContent = '✨ Generate';
+  }
+
+  document.getElementById('edit-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeEdit();
+  });
+
+  /* ── Add form ────────────────────────── */
+  function toggleAdd() {
+    const form   = document.getElementById('add-form');
+    const toggle = document.getElementById('add-toggle');
+    const open   = form.classList.toggle('open');
+    toggle.classList.toggle('open', open);
+  }
+
+  function addExample() {
+    const es = document.getElementById('f-ex-es').value.trim();
+    if (!es) return;
+    pendingExamples.push({ es });
+    document.getElementById('f-ex-es').value = '';
+    renderExamples();
+  }
+
+  function renderExamples() {
+    document.getElementById('example-list').innerHTML = pendingExamples.map((ex, i) =>
+      `<li class="example-item">
+        <div class="ex-es">${esc(ex.es)}</div>
+        ${ex.en ? `<div class="ex-en">${esc(ex.en)}</div>` : ''}
+        <button class="btn-del-ex" onclick="removeExample(${i})">✕</button>
+      </li>`
+    ).join('');
+  }
+
+  function removeExample(i) {
+    pendingExamples.splice(i, 1);
+    renderExamples();
+  }
+
+  function saveWord() {
+    const term  = document.getElementById('f-term').value.trim();
+    const trans = document.getElementById('f-trans').value.trim();
+    if (!term || !trans) {
+      alert('Please fill in the Spanish term and English translation.');
+      return;
+    }
+    VS.add({
+      term, translation: trans,
+      definition:   document.getElementById('f-def').value.trim(),
+      partOfSpeech: document.getElementById('f-pos').value.trim(),
+      examples:     pendingExamples.slice()
+    });
+    ['f-term','f-trans','f-def','f-pos'].forEach(id =>
+      document.getElementById(id).value = '');
+    pendingExamples = [];
+    renderExamples();
+    setGenMsg('', '');
+    refreshStats();
+    renderList();
+  }
+
+  /* ── Free Auto-fill ─────────────────────── */
+  async function doAutoFill() {
+    const term = document.getElementById('f-term').value.trim();
+    if (!term) { alert('Type a Spanish word first.'); return; }
+    const btn = document.getElementById('btn-autofill');
+    btn.disabled = true; btn.textContent = '⏳';
+    setGenMsg('', '');
+    try {
+      const data = await VS.autoFill(term);
+      console.log('autoFill result:', data);
+      console.log('f-trans el:', document.getElementById('f-trans'));
+      if (data.translation)  document.getElementById('f-trans').value = data.translation;
+      if (data.definition)   document.getElementById('f-def').value   = data.definition;
+      if (data.partOfSpeech) document.getElementById('f-pos').value   = data.partOfSpeech;
+      console.log('f-trans after set:', document.getElementById('f-trans').value);
+      console.log('f-def after set:', document.getElementById('f-def').value);
+      if (data.examples?.length) { pendingExamples = data.examples; renderExamples(); }
+      setGenMsg('ok', '✅ Translation, definition & POS filled — add examples manually or use ✨ Generate.');
+    } catch(e) {
+      console.error('doAutoFill error:', e);
+      setGenMsg('err', '⚠️ ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = '🔤 Auto-fill';
+  }
+
+  /* ── AI Generate ─────────────────────── */
+  async function doGenerate() {
+    const term = document.getElementById('f-term').value.trim();
+    if (!term) { alert('Type a Spanish word first.'); return; }
+    const btn = document.getElementById('btn-gen');
+    btn.disabled = true; btn.textContent = '⏳';
+    setGenMsg('', '');
+    try {
+      const data = await VS.generate(term);
+      if (data.translation)  document.getElementById('f-trans').value = data.translation;
+      if (data.definition)   document.getElementById('f-def').value   = data.definition;
+      if (data.partOfSpeech) document.getElementById('f-pos').value   = data.partOfSpeech;
+      if (data.examples?.length) { pendingExamples = data.examples; renderExamples(); }
+      setGenMsg('ok', '✅ Generated — review and save.');
+    } catch(e) {
+      setGenMsg('err', '⚠️ ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = '✨ Generate';
+  }
+
+  function setGenMsg(type, msg) {
+    const el = document.getElementById('gen-msg');
+    el.className = 'gen-msg' + (type ? ' ' + type : '');
+    el.textContent = msg;
+  }
+
+  /* ── Settings ────────────────────────── */
+  function selectProvider(p) {
+    VS.saveSettings({ aiProvider: p });
+    document.getElementById('prov-claude').classList.toggle('active', p === 'claude');
+    document.getElementById('prov-gemini').classList.toggle('active', p === 'gemini');
+  }
+  function openSettings() {
+    const s = VS.getSettings();
+    document.getElementById('claude-key-input').value = s.claudeApiKey || '';
+    document.getElementById('gemini-key-input').value = s.geminiApiKey || '';
+    const p = s.aiProvider || 'claude';
+    document.getElementById('prov-claude').classList.toggle('active', p === 'claude');
+    document.getElementById('prov-gemini').classList.toggle('active', p === 'gemini');
+    document.getElementById('settings-modal').classList.add('open');
+  }
+  function closeSettings() {
+    document.getElementById('settings-modal').classList.remove('open');
+  }
+  function saveApiKey() {
+    VS.saveSettings({
+      claudeApiKey: document.getElementById('claude-key-input').value.trim(),
+      geminiApiKey: document.getElementById('gemini-key-input').value.trim()
+    });
+    closeSettings();
+  }
+  document.getElementById('settings-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeSettings();
+  });
+
+  /* ── Import ──────────────────────────── */
+  let _importData = [], _importHeaders = [];
+
+  function openImport() {
+    document.getElementById('import-modal').classList.add('open');
+    resetImport();
+  }
+  function closeImport() {
+    document.getElementById('import-modal').classList.remove('open');
+  }
+  function resetImport() {
+    _importData = []; _importHeaders = [];
+    document.getElementById('import-drop-area').style.display = '';
+    document.getElementById('import-preview-area').style.display = 'none';
+    document.getElementById('btn-do-import').style.display = 'none';
+    document.getElementById('import-file').value = '';
+  }
+
+  async function handleImportFile(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'xlsx' || ext === 'xls') {
+      try {
+        if (!window.XLSX) {
+          const dropArea = document.getElementById('import-drop-area');
+          dropArea.innerHTML = '<strong>Loading Excel parser…</strong>';
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+            s.onload = res; s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        }
+        const buf = await file.arrayBuffer();
+        const wb  = XLSX.read(buf, { type: 'array' });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        processImportData(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' }));
+      } catch(e) {
+        alert('Could not load Excel parser (requires internet). Try saving as CSV from Excel instead.\n\nError: ' + e.message);
+        resetImport();
+      }
+    } else {
+      const text = await file.text();
+      const sep  = ext === 'tsv' ? '\t' : detectSep(text);
+      processImportData(text.split(/\r?\n/).filter(l => l.trim()).map(l => splitCSV(l, sep)));
+    }
+  }
+
+  function detectSep(text) {
+    const first = (text.split(/\r?\n/)[0] || '');
+    return first.split('\t').length > first.split(',').length ? '\t' : ',';
+  }
+
+  function splitCSV(row, sep) {
+    if (sep !== ',') return row.split(sep).map(c => c.trim());
+    const cells = []; let cur = '', inQ = false;
+    for (let i = 0; i < row.length; i++) {
+      const c = row[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cells.push(cur); cur = ''; }
+      else { cur += c; }
+    }
+    cells.push(cur);
+    return cells.map(c => c.trim());
+  }
+
+  function processImportData(data) {
+    data = data.filter(r => r.some(c => String(c).trim()));
+    if (!data.length) { alert('No data found in file.'); return; }
+    _importHeaders = data[0].map((h, i) => String(h || '').trim() || ('Col ' + (i + 1)));
+    _importData = data;
+    showImportPreview();
+  }
+
+  function showImportPreview() {
+    document.getElementById('import-drop-area').style.display = 'none';
+    document.getElementById('import-preview-area').style.display = '';
+    document.getElementById('btn-do-import').style.display = '';
+
+    const noneOpt = '<option value="-1">— skip —</option>';
+    const colOpts = _importHeaders.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join('');
+    ['col-spanish','col-english','col-pos','col-def'].forEach((id, fi) => {
+      document.getElementById(id).innerHTML = (fi === 0 ? '' : noneOpt) + colOpts;
+    });
+
+    // Auto-detect column mapping from header names
+    const hl   = _importHeaders.map(h => h.toLowerCase());
+    const find = (...kws) => hl.findIndex(h => kws.some(k => h.includes(k)));
+    const si   = find('spanish','term','es','word','palabra');
+    const ei   = find('english','translation','en','meaning','translate');
+    const pi   = find('pos','part','speech','type','clase');
+    const di   = find('def','description','note','definición');
+
+    document.getElementById('col-spanish').value = si >= 0 ? si : 0;
+    document.getElementById('col-english').value = ei >= 0 ? ei : (si === 0 ? 1 : 0);
+    document.getElementById('col-pos').value     = pi >= 0 ? pi : -1;
+    document.getElementById('col-def').value     = di >= 0 ? di : -1;
+
+    // Render preview table (first 5 rows)
+    const rows = _importData.slice(0, 5);
+    document.getElementById('import-table').innerHTML =
+      `<table><thead><tr>${_importHeaders.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>` +
+      `<tbody>${rows.map(r =>
+        `<tr>${_importHeaders.map((_, i) =>
+          `<td title="${esc(String(r[i]||''))}">${esc(String(r[i]||'').slice(0,25))}</td>`
+        ).join('')}</tr>`
+      ).join('')}</tbody></table>`;
+
+    updateImportCount();
+  }
+
+  function updateImportCount() {
+    const skip = document.getElementById('import-has-header').checked ? 1 : 0;
+    const si   = parseInt(document.getElementById('col-spanish').value);
+    const n    = _importData.slice(skip).filter(r => si >= 0 && String(r[si]||'').trim()).length;
+    document.getElementById('btn-do-import').textContent = `Import ${n} word${n !== 1 ? 's' : ''}`;
+  }
+
+  function doImport() {
+    const skip = document.getElementById('import-has-header').checked ? 1 : 0;
+    const si   = parseInt(document.getElementById('col-spanish').value);
+    const ei   = parseInt(document.getElementById('col-english').value);
+    const pi   = parseInt(document.getElementById('col-pos').value);
+    const di   = parseInt(document.getElementById('col-def').value);
+    let added  = 0;
+    _importData.slice(skip).forEach(r => {
+      const term = si >= 0 ? String(r[si]||'').trim() : '';
+      if (!term) return;
+      VS.add({
+        term,
+        translation:  ei >= 0 ? String(r[ei]||'').trim() : '',
+        partOfSpeech: pi >= 0 ? String(r[pi]||'').trim() : '',
+        definition:   di >= 0 ? String(r[di]||'').trim() : '',
+        examples: []
+      });
+      added++;
+    });
+    closeImport();
+    refreshStats();
+    renderList();
+    if (added) alert(`Imported ${added} word${added !== 1 ? 's' : ''}.`);
+  }
+
+  document.getElementById('import-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeImport();
+  });
+
+  /* ── Util ────────────────────────────── */
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+  init();
+</script>
+</body>
+</html>

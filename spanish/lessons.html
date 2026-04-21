@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Lesson — Spanish</title>
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#1a252f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5;
+           min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: #1a252f; color: white; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .back { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em; }
+    .back:hover { color: white; }
+    .hearts { font-size: 1.05em; letter-spacing: 2px; min-width: 60px; text-align: right; }
+
+    .progress-bar { height: 5px; background: #2c3e50; flex-shrink: 0; }
+    .progress-fill { height: 100%; background: #2980b9; transition: width .3s; }
+
+    /* ── Screens ── */
+    .screen { flex: 1; display: none; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    .center-box {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 20px; gap: 14px; text-align: center;
+    }
+    .big-icon { font-size: 3.2em; }
+    h2 { font-size: 1.25em; font-weight: 800; color: #2c3e50; }
+    .sub { font-size: 0.88em; color: #7f8c8d; max-width: 300px; line-height: 1.5; }
+    .btn-primary {
+      padding: 14px 36px; background: #2980b9; color: white; border: none;
+      border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer;
+    }
+    .btn-secondary {
+      padding: 12px 28px; background: #f0f2f5; color: #7f8c8d; border: none;
+      border-radius: 14px; font-size: 0.88em; cursor: pointer;
+      text-decoration: none; display: inline-block;
+    }
+
+    /* ── Question screen ── */
+    #screen-q { padding: 18px 16px 24px; gap: 14px; align-items: stretch; }
+
+    .q-label {
+      font-size: 0.68em; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 2px; color: #7f8c8d; text-align: center;
+    }
+
+    .q-prompt {
+      background: white; border-radius: 16px; padding: 24px 20px;
+      text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border-top: 4px solid #2980b9;
+    }
+    .prompt-word { font-size: 1.75em; font-weight: 800; color: #2c3e50; line-height: 1.2; }
+    .prompt-hint { font-size: 0.82em; color: #7f8c8d; margin-top: 6px; line-height: 1.4; }
+    .btn-tts {
+      margin-top: 12px; background: #eaf4fb; border: none; border-radius: 8px;
+      padding: 7px 16px; font-size: 0.82em; cursor: pointer; color: #2980b9; font-weight: 600;
+    }
+    .btn-tts:hover { background: #d4e9f7; }
+
+    .choices { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn {
+      width: 100%; padding: 15px 18px; background: white; color: #2c3e50;
+      border: 2px solid #e1e8ed; border-radius: 14px; font-size: 0.93em;
+      font-weight: 600; cursor: pointer; text-align: left;
+      transition: border-color .15s, background .15s;
+    }
+    .choice-btn:hover:not(:disabled) { border-color: #2980b9; background: #eaf4fb; }
+    .choice-btn:disabled { cursor: default; }
+    .choice-btn.correct { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60; }
+    .choice-btn.wrong   { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c; }
+    .choice-btn.reveal  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60; }
+
+    /* ── Feedback ── */
+    .feedback {
+      border-radius: 14px; padding: 14px 16px; display: none;
+      flex-direction: column; gap: 4px;
+    }
+    .feedback.correct { display: flex; background: #eafaf1; border: 2px solid #27ae60; }
+    .feedback.wrong   { display: flex; background: #fdedec; border: 2px solid #e74c3c; }
+    .fb-head { font-weight: 700; font-size: 0.9em; }
+    .feedback.correct .fb-head { color: #27ae60; }
+    .feedback.wrong   .fb-head { color: #e74c3c; }
+    .fb-body { font-size: 0.82em; color: #7f8c8d; line-height: 1.4; }
+
+    .btn-continue {
+      width: 100%; padding: 15px; background: #2980b9; color: white; border: none;
+      border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer;
+      display: none;
+    }
+    .btn-continue.visible { display: block; }
+
+    /* ── Finish screen ── */
+    .stars { font-size: 2.4em; letter-spacing: 6px; }
+    .score-row { display: flex; gap: 24px; justify-content: center; }
+    .sc { text-align: center; }
+    .sc-num { font-size: 2em; font-weight: 800; color: #2980b9; }
+    .sc-lbl { font-size: 0.75em; color: #7f8c8d; margin-top: 2px; }
+
+    /* Weak words summary */
+    .weak-summary {
+      background: #fef5e7; border-radius: 14px; padding: 14px 16px;
+      max-width: 340px; width: 100%; text-align: left;
+    }
+    .weak-summary h3 { font-size: 0.85em; color: #e67e22; font-weight: 700; margin-bottom: 8px; }
+    .weak-word-item { font-size: 0.82em; color: #2c3e50; padding: 3px 0; border-bottom: 1px solid #fdebd0; }
+    .weak-word-item:last-child { border-bottom: none; }
+    .weak-word-item .ww-term  { font-weight: 700; }
+    .weak-word-item .ww-trans { color: #7f8c8d; margin-left: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="index.html">← Spanish</a>
+  <span class="hearts" id="hearts">❤️❤️❤️</span>
+</header>
+<div class="progress-bar">
+  <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+</div>
+
+<!-- Start screen -->
+<div class="screen active" id="screen-start">
+  <div class="center-box">
+    <div class="big-icon">🎯</div>
+    <h2 id="start-title">Let's practice!</h2>
+    <p class="sub" id="start-sub">Loading…</p>
+    <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
+    <a class="btn-secondary" href="index.html">Back</a>
+  </div>
+</div>
+
+<!-- Question screen -->
+<div class="screen" id="screen-q">
+  <div class="q-label"    id="q-label"></div>
+  <div class="q-prompt">
+    <div class="prompt-word" id="prompt-word"></div>
+    <div class="prompt-hint" id="prompt-hint"></div>
+    <button class="btn-tts" id="btn-tts" style="display:none" onclick="speakPrompt()">🔊 Listen</button>
+  </div>
+  <div class="choices"  id="choices"></div>
+  <div class="feedback" id="feedback">
+    <div class="fb-head" id="fb-head"></div>
+    <div class="fb-body" id="fb-body"></div>
+  </div>
+  <button class="btn-continue" id="btn-continue" onclick="nextQuestion()">Continue →</button>
+</div>
+
+<!-- Finish screen -->
+<div class="screen" id="screen-finish">
+  <div class="center-box">
+    <div class="stars"  id="finish-stars">⭐⭐⭐</div>
+    <h2>Lesson complete!</h2>
+    <div class="score-row">
+      <div class="sc"><div class="sc-num" id="fin-correct">0</div><div class="sc-lbl">Correct</div></div>
+      <div class="sc"><div class="sc-num" id="fin-wrong">0</div><div class="sc-lbl">Wrong</div></div>
+      <div class="sc"><div class="sc-num" id="fin-xp">0</div><div class="sc-lbl">XP</div></div>
+    </div>
+    <div class="weak-summary" id="weak-summary" style="display:none">
+      <h3>💪 Added to Weak Words — review these in flashcards:</h3>
+      <div id="weak-list"></div>
+    </div>
+    <button class="btn-primary" onclick="startLesson()">Play Again</button>
+    <a class="btn-secondary" href="index.html">Back to Hub</a>
+  </div>
+</div>
+
+<script src="vocab.js"></script>
+<script>
+  const SESSION_SIZE = 10;
+  let questions = [], qIndex = 0, hearts = 3, correctCount = 0, wrongCount = 0;
+  let currentQ = null, answered = false, currentPromptEs = '';
+  let wrongWords = []; // track which words were answered wrong this session
+
+  /* ── Init ─────────────────────────────── */
+  function initStart() {
+    const all = VS.getAll();
+    const btn = document.getElementById('btn-start');
+    if (all.length < 4) {
+      document.getElementById('start-title').textContent = 'Need more words';
+      document.getElementById('start-sub').textContent =
+        'Add at least 4 vocabulary words to the hub before starting a lesson.';
+      btn.textContent = 'Add Words';
+      btn.onclick = () => location.href = 'index.html';
+    } else {
+      document.getElementById('start-title').textContent = "Let's practice!";
+      document.getElementById('start-sub').textContent =
+        `${all.length} word${all.length !== 1 ? 's' : ''} in your vocabulary · 3 lives · wrong answers are flagged as weak`;
+      btn.onclick = startLesson;
+    }
+  }
+
+  /* ── Build lesson ─────────────────────── */
+  function startLesson() {
+    const all = VS.getAll();
+    if (all.length < 4) { location.href = 'index.html'; return; }
+
+    const now  = Date.now();
+    const due  = all.filter(w => (w.nextReview || 0) <= now);
+    const rest = shuffle(all.filter(w => (w.nextReview || 0) > now));
+    const pool = shuffle([...due, ...rest]).slice(0, SESSION_SIZE);
+
+    questions   = pool.map(w => makeQuestion(w, all)).filter(Boolean);
+    wrongWords  = [];
+    qIndex      = 0;
+    hearts      = 3;
+    correctCount= 0;
+    wrongCount  = 0;
+
+    if (!questions.length) { location.href = 'index.html'; return; }
+
+    updateHearts(); updateProgress();
+    showScreen('screen-q');
+    showQuestion();
+  }
+
+  function makeQuestion(word, all) {
+    const others = shuffle(all.filter(w => w.id !== word.id));
+    if (others.length < 3) return null;
+    const dist = others.slice(0, 3);
+
+    // Prefer question types based on what data the word has
+    const types = ['es-to-en', 'en-to-es'];
+    if (word.examples && word.examples.length) {
+      const ex = word.examples[0];
+      if (ex && new RegExp('\\b' + escRe(word.term) + '\\b', 'i').test(ex.es)) {
+        types.push('fill-blank');
+      }
+    }
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    if (type === 'es-to-en') {
+      return {
+        word, type,
+        label:   'What does this mean?',
+        prompt:  word.term,
+        lang:    'es',
+        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        options: shuffle([word.translation, ...dist.map(w => w.translation)]),
+        answer:  word.translation,
+        explain: word.definition || '"' + word.term + '" means "' + word.translation + '"'
+      };
+    }
+    if (type === 'en-to-es') {
+      return {
+        word, type,
+        label:   'How do you say this in Spanish?',
+        prompt:  word.translation,
+        lang:    'en',
+        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        options: shuffle([word.term, ...dist.map(w => w.term)]),
+        answer:  word.term,
+        explain: word.definition || '"' + word.translation + '" → "' + word.term + '"'
+      };
+    }
+    if (type === 'fill-blank') {
+      const ex = word.examples[0];
+      const blanked = ex.es.replace(new RegExp('\\b' + escRe(word.term) + '\\b', 'gi'), '______');
+      return {
+        word, type,
+        label:   'Fill in the blank',
+        prompt:  blanked,
+        lang:    'es',
+        hint:    ex.en || '',
+        options: shuffle([word.term, ...dist.map(w => w.term)]),
+        answer:  word.term,
+        explain: 'Full sentence: "' + ex.es + '"'
+      };
+    }
+    return null;
+  }
+
+  /* ── Show question ────────────────────── */
+  function showQuestion() {
+    if (qIndex >= questions.length || hearts <= 0) { showFinish(); return; }
+    currentQ = questions[qIndex];
+    answered = false;
+    currentPromptEs = currentQ.lang === 'es' ? currentQ.prompt : '';
+
+    document.getElementById('q-label').textContent    = currentQ.label;
+    document.getElementById('prompt-word').textContent = currentQ.prompt;
+    document.getElementById('prompt-hint').textContent = currentQ.hint;
+
+    const ttsBtn = document.getElementById('btn-tts');
+    ttsBtn.style.display = (VS.hasTTS() && currentQ.lang === 'es') ? '' : 'none';
+
+    document.getElementById('choices').innerHTML = currentQ.options.map((opt, i) =>
+      `<button class="choice-btn" id="c${i}" onclick="choose(${i})">${opt}</button>`
+    ).join('');
+
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('btn-continue').classList.remove('visible');
+    updateProgress();
+  }
+
+  /* ── Answer ──────────────────────────── */
+  function choose(i) {
+    if (answered) return;
+    answered = true;
+
+    const chosen  = currentQ.options[i];
+    const isRight = chosen === currentQ.answer;
+
+    // Style all buttons
+    currentQ.options.forEach((opt, j) => {
+      const btn = document.getElementById('c' + j);
+      btn.disabled = true;
+      if (opt === currentQ.answer) btn.classList.add('reveal');
+    });
+    if (!isRight) document.getElementById('c' + i).classList.add('wrong');
+    else          document.getElementById('c' + i).classList.add('correct');
+
+    // Track result → feeds back into SRS + weak words
+    VS.trackLessonResult(currentQ.word.id, isRight);
+
+    if (isRight) {
+      correctCount++;
+      showFeedback(true, '✓ Correct!', currentQ.explain);
+    } else {
+      wrongCount++;
+      hearts--;
+      updateHearts();
+      // Track for end-of-lesson summary
+      if (!wrongWords.find(w => w.id === currentQ.word.id)) {
+        wrongWords.push(currentQ.word);
+      }
+      showFeedback(false,
+        '✗ Incorrect — correct answer: "' + currentQ.answer + '"',
+        currentQ.explain
+      );
+      if (VS.hasTTS()) VS.speak(currentQ.answer);
+    }
+
+    document.getElementById('btn-continue').classList.add('visible');
+  }
+
+  function showFeedback(ok, head, body) {
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback ' + (ok ? 'correct' : 'wrong');
+    document.getElementById('fb-head').textContent = head;
+    document.getElementById('fb-body').textContent = body;
+  }
+
+  function nextQuestion() {
+    qIndex++;
+    if (qIndex >= questions.length || hearts <= 0) { showFinish(); return; }
+    showQuestion();
+  }
+
+  /* ── Finish ──────────────────────────── */
+  function showFinish() {
+    const h     = Math.max(0, hearts);
+    const stars = h >= 3 ? '⭐⭐⭐' : h >= 2 ? '⭐⭐' : h >= 1 ? '⭐' : '💪';
+    const xp    = correctCount * 10;
+
+    document.getElementById('finish-stars').textContent   = stars;
+    document.getElementById('fin-correct').textContent    = correctCount;
+    document.getElementById('fin-wrong').textContent      = wrongCount;
+    document.getElementById('fin-xp').textContent         = xp;
+
+    // Show weak words summary if any
+    const weakSummary = document.getElementById('weak-summary');
+    const weakList    = document.getElementById('weak-list');
+    if (wrongWords.length) {
+      weakList.innerHTML = wrongWords.map(w =>
+        `<div class="weak-word-item">
+          <span class="ww-term">${w.term}</span>
+          <span class="ww-trans">${w.translation}</span>
+        </div>`
+      ).join('');
+      weakSummary.style.display = '';
+    } else {
+      weakSummary.style.display = 'none';
+    }
+
+    showScreen('screen-finish');
+  }
+
+  /* ── Helpers ─────────────────────────── */
+  function speakPrompt() { if (currentPromptEs) VS.speak(currentPromptEs); }
+
+  function updateHearts() {
+    const h = Math.max(0, hearts);
+    document.getElementById('hearts').textContent =
+      '❤️'.repeat(h) + '🖤'.repeat(3 - h);
+  }
+
+  function updateProgress() {
+    const pct = questions.length ? Math.round(qIndex / questions.length * 100) : 0;
+    document.getElementById('prog-fill').style.width = pct + '%';
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function escRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+  initStart();
+</script>
+</body>
+</html>
