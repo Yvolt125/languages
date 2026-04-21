@@ -323,6 +323,18 @@
     .trans-alt-chip:hover  { background: #fef5e7; border-color: #e67e22; color: #e67e22; }
     .trans-alt-chip.active { background: #fef5e7; border-color: #e67e22; color: #e67e22; }
 
+    /* ── Interpretation picker ── */
+    .interp-picker { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+    .interp-label { font-size: 0.72em; font-weight: 700; color: #7f8c8d; text-transform: uppercase; letter-spacing: .5px; }
+    .interp-option {
+      padding: 10px 14px; border-radius: 10px; border: 1.5px solid #e1e8ed;
+      cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .interp-option:hover { border-color: #e67e22; background: #fef5e7; }
+    .interp-option .interp-trans { font-weight: 700; color: #2c3e50; font-size: 0.9em; }
+    .interp-option .interp-pos { font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #e67e22; margin: 2px 0; }
+    .interp-option .interp-def { font-size: 0.8em; color: #7f8c8d; line-height: 1.4; }
+
     /* ── Definition picker ── */
     .def-picker { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
     .def-option {
@@ -412,6 +424,7 @@
       </div>
 
       <div class="gen-msg" id="gen-msg"></div>
+      <div class="interp-picker" id="f-interp-picker" style="display:none"></div>
 
       <div class="form-row">
         <div class="form-group">
@@ -461,6 +474,7 @@
     </div>
   </div>
   <div class="tag-filter-row" id="tag-filter-row"></div>
+  <div class="tag-filter-row" id="missing-filter-row"></div>
   <div class="vocab-list" id="vocab-list"></div>
 
 </div>
@@ -576,6 +590,7 @@
       <button class="btn-gen"      id="e-btn-gen"      onclick="editGenerate()"  style="flex:1">✨ Generate</button>
     </div>
     <div class="gen-msg" id="e-gen-msg"></div>
+    <div class="interp-picker" id="e-interp-picker" style="display:none"></div>
     <div class="form-group">
       <label>Tags <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional, comma-separated)</span></label>
       <input id="e-tags" type="text" placeholder="food, travel, verbs…">
@@ -623,11 +638,13 @@
   let pendingExamples = [];
   let sortMode = 'recent';
   let activeTagFilter = null;
+  let activeMissingFilter = null;
 
   /* ── Init ────────────────────────────── */
   function init() {
     refreshStats();
     renderTagChips();
+    renderMissingChips();
     renderTagSuggestions('f-tags', 'f-tag-sugs');
     renderList();
   }
@@ -678,12 +695,40 @@
     renderList();
   }
 
+  /* ── Missing field filter ────────────── */
+  function renderMissingChips() {
+    const words = VS.getAll();
+    const counts = {
+      definition:   words.filter(w => !w.definition).length,
+      partOfSpeech: words.filter(w => !w.partOfSpeech).length,
+      examples:     words.filter(w => !(w.examples && w.examples.length)).length
+    };
+    const labels = { definition: 'No definition', partOfSpeech: 'No part of speech', examples: 'No examples' };
+    const el = document.getElementById('missing-filter-row');
+    el.innerHTML = Object.entries(counts)
+      .filter(([, n]) => n > 0)
+      .map(([k, n]) =>
+        `<button class="tag-chip${activeMissingFilter === k ? ' active' : ''}"
+          onclick="toggleMissingFilter(${JSON.stringify(k)})">${labels[k]} (${n})</button>`
+      ).join('');
+  }
+
+  function toggleMissingFilter(field) {
+    activeMissingFilter = activeMissingFilter === field ? null : field;
+    renderMissingChips();
+    renderList();
+  }
+
   /* ── Vocab list ──────────────────────── */
   function renderList() {
     const q   = (document.getElementById('search').value || '').toLowerCase().trim();
     let words = VS.getAll().filter(w =>
       (!q || w.term.toLowerCase().includes(q) || w.translation.toLowerCase().includes(q)) &&
-      (!activeTagFilter || (w.tags || []).includes(activeTagFilter))
+      (!activeTagFilter || (w.tags || []).includes(activeTagFilter)) &&
+      (!activeMissingFilter ||
+        (activeMissingFilter === 'definition'   && !w.definition) ||
+        (activeMissingFilter === 'partOfSpeech' && !w.partOfSpeech) ||
+        (activeMissingFilter === 'examples'     && !(w.examples && w.examples.length)))
     );
 
     if      (sortMode === 'recent') words.sort((a, b) => b.created - a.created);
@@ -761,6 +806,7 @@
     VS.remove(id);
     refreshStats();
     renderTagChips();
+    renderMissingChips();
     renderList();
   }
 
@@ -787,6 +833,8 @@
     document.getElementById('edit-modal').classList.remove('open');
     editId = null; editExamples = [];
     renderTransAlts('e-trans-alts', 'e-trans', []);
+    const ep = document.getElementById('e-interp-picker');
+    ep.style.display = 'none'; ep.innerHTML = '';
   }
 
   function editAddExample() {
@@ -830,6 +878,7 @@
     closeEdit();
     refreshStats();
     renderTagChips();
+    renderMissingChips();
     renderList();
   }
 
@@ -866,11 +915,17 @@
     setEditMsg('', '');
     try {
       const data = await VS.generate(term);
-      if (data.translation)  document.getElementById('e-trans').value = data.translation;
-      if (data.definition)   document.getElementById('e-def').value   = data.definition;
-      if (data.partOfSpeech) document.getElementById('e-pos').value   = data.partOfSpeech;
-      if (data.examples?.length) { editExamples = data.examples; renderEditExamples(); }
-      setEditMsg('ok', '✅ Generated — review and save.');
+      const items = Array.isArray(data) ? data : [data];
+      if (items.length === 1) {
+        applyEditGenResult(items[0]);
+        setEditMsg('ok', '✅ Generated — review and save.');
+      } else {
+        renderInterpPicker('e-interp-picker', items, d => {
+          applyEditGenResult(d);
+          setEditMsg('ok', '✅ Generated — review and save.');
+        });
+        setEditMsg('ok', '✨ Multiple meanings found — pick one below.');
+      }
     } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
     btn.disabled = false; btn.textContent = '✨ Generate';
   }
@@ -932,9 +987,12 @@
     pendingExamples = [];
     renderExamples();
     renderDefPicker('f-def-picker', 'f-def', 'f-pos', [], 0);
+    const fp = document.getElementById('f-interp-picker');
+    fp.style.display = 'none'; fp.innerHTML = '';
     setGenMsg('', '');
     refreshStats();
     renderTagChips();
+    renderMissingChips();
     renderList();
   }
 
@@ -1024,6 +1082,43 @@
   }
 
   /* ── AI Generate ─────────────────────── */
+  function applyGenResult(data) {
+    if (data.translation)  document.getElementById('f-trans').value = data.translation;
+    if (data.definition)   document.getElementById('f-def').value   = data.definition;
+    if (data.partOfSpeech) document.getElementById('f-pos').value   = data.partOfSpeech;
+    if (data.examples?.length) { pendingExamples = data.examples; renderExamples(); }
+  }
+
+  function applyEditGenResult(data) {
+    if (data.translation)  document.getElementById('e-trans').value = data.translation;
+    if (data.definition)   document.getElementById('e-def').value   = data.definition;
+    if (data.partOfSpeech) document.getElementById('e-pos').value   = data.partOfSpeech;
+    if (data.examples?.length) { editExamples = data.examples; renderEditExamples(); }
+  }
+
+  function renderInterpPicker(pickerId, items, onPick) {
+    const el = document.getElementById(pickerId);
+    if (!items || items.length <= 1) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = 'flex';
+    el.innerHTML = '<div class="interp-label">Multiple meanings — pick one:</div>' +
+      items.map((d, i) =>
+        `<div class="interp-option" onclick="pickInterp('${pickerId}',${i})">
+          <div class="interp-trans">${esc(d.translation)}</div>
+          ${d.partOfSpeech ? `<div class="interp-pos">${esc(d.partOfSpeech)}</div>` : ''}
+          ${d.definition ? `<div class="interp-def">${esc(d.definition)}</div>` : ''}
+        </div>`
+      ).join('');
+    el._items = items;
+    el._onPick = onPick;
+  }
+
+  function pickInterp(pickerId, idx) {
+    const el = document.getElementById(pickerId);
+    if (!el._items) return;
+    el._onPick(el._items[idx]);
+    el.style.display = 'none'; el.innerHTML = '';
+  }
+
   async function doGenerate() {
     const term = document.getElementById('f-term').value.trim();
     if (!term) { alert('Type a Dutch word first.'); return; }
@@ -1032,11 +1127,17 @@
     setGenMsg('', '');
     try {
       const data = await VS.generate(term);
-      if (data.translation)  document.getElementById('f-trans').value = data.translation;
-      if (data.definition)   document.getElementById('f-def').value   = data.definition;
-      if (data.partOfSpeech) document.getElementById('f-pos').value   = data.partOfSpeech;
-      if (data.examples?.length) { pendingExamples = data.examples; renderExamples(); }
-      setGenMsg('ok', '✅ Generated — review and save.');
+      const items = Array.isArray(data) ? data : [data];
+      if (items.length === 1) {
+        applyGenResult(items[0]);
+        setGenMsg('ok', '✅ Generated — review and save.');
+      } else {
+        renderInterpPicker('f-interp-picker', items, d => {
+          applyGenResult(d);
+          setGenMsg('ok', '✅ Generated — review and save.');
+        });
+        setGenMsg('ok', '✨ Multiple meanings found — pick one below.');
+      }
     } catch(e) {
       setGenMsg('err', '⚠️ ' + e.message);
     }

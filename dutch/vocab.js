@@ -223,16 +223,19 @@
       const provider = s.aiProvider || 'claude';
 
       const PROMPT =
-`You are a Dutch language expert. For the Dutch word or phrase "${term}", return ONLY a JSON object — no other text:
-{
-  "translation": "English translation",
-  "definition": "One sentence English definition",
-  "partOfSpeech": "noun/verb/adjective/adverb/phrase/etc",
-  "examples": [
-    { "nl": "Natural Dutch sentence using the exact word/phrase.", "en": "English translation." },
-    { "nl": "Another natural example.", "en": "English translation." }
-  ]
-}`;
+`You are a Dutch language expert. The Dutch word or phrase "${term}" may have multiple distinct meanings. Return ONLY a JSON array of 1–3 interpretations — no other text:
+[
+  {
+    "translation": "English translation",
+    "definition": "One sentence English definition",
+    "partOfSpeech": "noun/verb/adjective/adverb/phrase/interjection/etc",
+    "examples": [
+      { "nl": "Natural Dutch sentence using the exact word/phrase.", "en": "English translation." },
+      { "nl": "Another natural example.", "en": "English translation." }
+    ]
+  }
+]
+Include all distinct meanings (different parts of speech, idiomatic vs literal, formal vs slang). If the word has only one clear meaning, return a single-item array.`;
 
       if (provider === 'gemini') {
         const key = s.geminiApiKey;
