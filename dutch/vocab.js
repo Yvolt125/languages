@@ -258,7 +258,7 @@
       const PROMPT =
 `You are a Dutch language expert. For the Dutch word or phrase "${term}", return ONLY a JSON array of all distinct interpretations — no other text:
 [{ "translation": "English translation", "definition": "One sentence English definition", "partOfSpeech": "noun/verb/adjective/adverb/interjection/onomatopoeia/etc" }]
-Include every distinct use: different parts of speech, onomatopoeia, informal/slang, idiomatic, regional. Return up to 5 items — be generous and include any plausible interpretation.`;
+Return 2–4 items covering FUNDAMENTALLY different meanings only — do not list variations of the same concept as separate entries. Each item must represent a different real-world thing or use.`;
       const text = await this._aiCall(PROMPT, 600);
       const data = this._parseJSON(text);
       return Array.isArray(data) ? data : [data];
