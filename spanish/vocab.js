@@ -258,8 +258,8 @@
       const PROMPT =
 `You are a Spanish language expert. For the Spanish word or phrase "${term}", return ONLY a JSON array of all distinct interpretations — no other text:
 [{ "translation": "English translation", "definition": "One sentence English definition", "partOfSpeech": "noun/verb/adjective/adverb/interjection/onomatopoeia/etc" }]
-Include every distinct use: different parts of speech, onomatopoeia, informal/slang, idiomatic. Return at least 2 items if the word has any ambiguity at all.`;
-      const text = await this._aiCall(PROMPT, 400);
+Include every distinct use: different parts of speech, onomatopoeia, informal/slang, idiomatic, regional. Return up to 5 items — be generous and include any plausible interpretation.`;
+      const text = await this._aiCall(PROMPT, 600);
       const data = this._parseJSON(text);
       return Array.isArray(data) ? data : [data];
     },
