@@ -1,7 +1,7 @@
 {
-  "name": "The Hub",
-  "short_name": "Hub",
-  "description": "Sisyphus' Study & Tracking Hub",
+  "name": "Accento",
+  "short_name": "Accento",
+  "description": "Learn languages — vocabulary, flashcards & lessons",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

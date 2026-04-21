@@ -1,12 +1,13 @@
-const CACHE_NAME = 'hub-v9';
+const CACHE_NAME = 'accento-v1';
 
-// Core assets to cache for offline use
 const PRE_CACHE = [
   './index.html',
   './manifest.json',
   './icon.svg',
-  './exercise/index.html',
-  './applied-anthropology/index.html'
+  './spanish/index.html',
+  './spanish/flashcards.html',
+  './spanish/lessons.html',
+  './spanish/vocab.js'
 ];
 
 self.addEventListener('install', e => {
