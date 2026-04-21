@@ -116,6 +116,33 @@
     .weak-word-item:last-child { border-bottom: none; }
     .weak-word-item .ww-term  { font-weight: 700; }
     .weak-word-item .ww-trans { color: #7f8c8d; margin-left: 6px; }
+    .q-highlight { color: #c0392b; }
+    .type-area { display: flex; flex-direction: column; gap: 10px; }
+    .type-input {
+      width: 100%; padding: 15px 16px; border: 2px solid #e1e8ed;
+      border-radius: 14px; font-size: 1em; font-family: inherit;
+      transition: border-color .15s;
+    }
+    .type-input:focus { outline: none; border-color: #2980b9; }
+    .btn-submit {
+      padding: 15px; background: #2980b9; color: white; border: none;
+      border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer;
+    }
+    .scramble-area { display: flex; flex-direction: column; gap: 12px; }
+    .scramble-answer {
+      min-height: 54px; background: white; border-radius: 14px; padding: 10px 12px;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      border: 2px dashed #c8d6e5;
+    }
+    .scramble-bank { display: flex; flex-wrap: wrap; gap: 8px; }
+    .word-tile {
+      padding: 9px 14px; background: white; border: 2px solid #c8d6e5;
+      border-radius: 10px; cursor: pointer; font-size: 0.9em; font-weight: 600;
+      color: #2c3e50; transition: border-color .15s, opacity .15s;
+    }
+    .word-tile:hover:not(:disabled) { border-color: #2980b9; }
+    .word-tile:disabled { opacity: 0.4; cursor: default; }
+    .word-tile.in-answer { border-color: #2980b9; background: #eaf4fb; }
   </style>
 </head>
 <body>
@@ -147,7 +174,18 @@
     <div class="prompt-hint" id="prompt-hint"></div>
     <button class="btn-tts" id="btn-tts" style="display:none" onclick="speakPrompt()">🔊 Listen</button>
   </div>
-  <div class="choices"  id="choices"></div>
+  <div class="choices" id="choices"></div>
+  <div class="type-area" id="type-area" style="display:none">
+    <input type="text" id="type-input" class="type-input"
+           placeholder="Type your answer…"
+           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+           onkeydown="if(event.key==='Enter')submitType()">
+    <button class="btn-submit" onclick="submitType()">Check →</button>
+  </div>
+  <div class="scramble-area" id="scramble-area" style="display:none">
+    <div class="scramble-answer" id="scramble-answer"></div>
+    <div class="scramble-bank"   id="scramble-bank"></div>
+  </div>
   <div class="feedback" id="feedback">
     <div class="fb-head" id="fb-head"></div>
     <div class="fb-body" id="fb-body"></div>
@@ -228,13 +266,14 @@
     if (others.length < 3) return null;
     const dist = others.slice(0, 3);
 
-    // Prefer question types based on what data the word has
-    const types = ['es-to-en', 'en-to-es'];
+    const types = ['es-to-en', 'en-to-es', 'type-word'];
+    if (VS.hasTTS()) types.push('listen-pick', 'listen-type');
     if (word.examples && word.examples.length) {
-      const ex = word.examples[0];
-      if (ex && new RegExp('\\b' + escRe(word.term) + '\\b', 'i').test(ex.es)) {
+      types.push('example-ctx');
+      if (word.examples.some(ex => ex.es && ex.es.split(' ').length >= 3))
+        types.push('sentence-scramble');
+      if (word.examples.some(ex => ex.es && ex.es.toLowerCase().includes(word.term.toLowerCase())))
         types.push('fill-blank');
-      }
     }
     const type = types[Math.floor(Math.random() * types.length)];
 
@@ -262,9 +301,74 @@
         explain: word.definition || '"' + word.translation + '" → "' + word.term + '"'
       };
     }
+    if (type === 'type-word') {
+      return {
+        word, type,
+        label:   'Type the Spanish word',
+        prompt:  word.translation,
+        lang:    'en',
+        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        answer:  word.term,
+        explain: '"' + word.translation + '" → "' + word.term + '"'
+      };
+    }
+    if (type === 'listen-pick') {
+      return {
+        word, type,
+        label:   'What do you hear?',
+        prompt:  '',
+        audio:   word.term,
+        lang:    'es',
+        hint:    '',
+        options: shuffle([word.translation, ...dist.map(w => w.translation)]),
+        answer:  word.translation,
+        explain: '"' + word.term + '" means "' + word.translation + '"'
+      };
+    }
+    if (type === 'listen-type') {
+      return {
+        word, type,
+        label:   'Type what you hear',
+        prompt:  '',
+        audio:   word.term,
+        lang:    'es',
+        hint:    '',
+        answer:  word.term,
+        explain: '"' + word.term + '" means "' + word.translation + '"'
+      };
+    }
+    if (type === 'example-ctx') {
+      const ex = word.examples[Math.floor(Math.random() * word.examples.length)];
+      return {
+        word, type,
+        label:    'What does the highlighted word mean?',
+        prompt:   ex.es,
+        boldTerm: word.term,
+        lang:     'es',
+        hint:     '',
+        options:  shuffle([word.translation, ...dist.map(w => w.translation)]),
+        answer:   word.translation,
+        explain:  word.definition || '"' + word.term + '" means "' + word.translation + '"'
+      };
+    }
+    if (type === 'sentence-scramble') {
+      const valid = word.examples.filter(ex => ex.es && ex.es.split(' ').length >= 3);
+      const ex = valid[Math.floor(Math.random() * valid.length)];
+      return {
+        word, type,
+        label:         'Put the words in order',
+        prompt:        ex.en || '',
+        lang:          'en',
+        hint:          '',
+        scrambleWords: shuffle(ex.es.split(' ')),
+        answer:        ex.es,
+        explain:       'Full sentence: "' + ex.es + '"'
+      };
+    }
     if (type === 'fill-blank') {
-      const ex = word.examples[0];
-      const blanked = ex.es.replace(new RegExp('\\b' + escRe(word.term) + '\\b', 'gi'), '______');
+      const valid = word.examples.filter(ex => ex.es && ex.es.toLowerCase().includes(word.term.toLowerCase()));
+      const ex = valid[Math.floor(Math.random() * valid.length)];
+      const blanked = ex.es.replace(new RegExp(escRe(word.term), 'gi'), '______');
       return {
         word, type,
         label:   'Fill in the blank',
@@ -284,18 +388,43 @@
     if (qIndex >= questions.length || hearts <= 0) { showFinish(); return; }
     currentQ = questions[qIndex];
     answered = false;
-    currentPromptEs = currentQ.lang === 'es' ? currentQ.prompt : '';
+    currentPromptEs = currentQ.audio || (currentQ.lang === 'es' ? currentQ.prompt : '');
 
-    document.getElementById('q-label').textContent    = currentQ.label;
-    document.getElementById('prompt-word').textContent = currentQ.prompt;
-    document.getElementById('prompt-hint').textContent = currentQ.hint;
+    document.getElementById('q-label').textContent     = currentQ.label;
+    document.getElementById('prompt-hint').textContent = currentQ.hint || '';
+
+    const pw = document.getElementById('prompt-word');
+    if (currentQ.audio && !currentQ.prompt) {
+      pw.innerHTML = '<span style="font-size:2em">🔊</span>';
+    } else if (currentQ.boldTerm) {
+      const esc = currentQ.prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      pw.innerHTML = esc.replace(new RegExp('(' + escRe(currentQ.boldTerm) + ')', 'gi'),
+        '<strong class="q-highlight">$1</strong>');
+    } else {
+      pw.textContent = currentQ.prompt;
+    }
 
     const ttsBtn = document.getElementById('btn-tts');
-    ttsBtn.style.display = (VS.hasTTS() && currentQ.lang === 'es') ? '' : 'none';
+    ttsBtn.style.display = (VS.hasTTS() && (currentQ.audio || currentQ.lang === 'es')) ? '' : 'none';
 
-    document.getElementById('choices').innerHTML = currentQ.options.map((opt, i) =>
-      `<button class="choice-btn" id="c${i}" onclick="choose(${i})">${opt}</button>`
-    ).join('');
+    const isType     = currentQ.type === 'type-word' || currentQ.type === 'listen-type';
+    const isScramble = currentQ.type === 'sentence-scramble';
+    document.getElementById('choices').style.display       = (!isType && !isScramble) ? '' : 'none';
+    document.getElementById('type-area').style.display     = isType     ? '' : 'none';
+    document.getElementById('scramble-area').style.display = isScramble ? '' : 'none';
+
+    if (!isType && !isScramble) {
+      document.getElementById('choices').innerHTML = currentQ.options.map((opt, i) =>
+        `<button class="choice-btn" id="c${i}" onclick="choose(${i})">${opt}</button>`
+      ).join('');
+    }
+    if (isType) {
+      const inp = document.getElementById('type-input');
+      inp.value = ''; inp.disabled = false; inp.style.borderColor = '';
+      setTimeout(() => inp.focus(), 50);
+    }
+    if (isScramble) renderScramble();
+    if (currentQ.audio) setTimeout(() => VS.speak(currentQ.audio), 400);
 
     document.getElementById('feedback').className = 'feedback';
     document.getElementById('btn-continue').classList.remove('visible');
@@ -387,7 +516,108 @@
   }
 
   /* ── Helpers ─────────────────────────── */
-  function speakPrompt() { if (currentPromptEs) VS.speak(currentPromptEs); }
+  function speakPrompt() {
+    if (currentQ && currentQ.audio) VS.speak(currentQ.audio);
+    else if (currentPromptEs) VS.speak(currentPromptEs);
+  }
+
+  /* ── Type input ──────────────────────── */
+  function submitType() {
+    if (answered) return;
+    const inp = document.getElementById('type-input');
+    const typed = inp.value.trim();
+    if (!typed) return;
+    answered = true;
+    inp.disabled = true;
+
+    const correct = currentQ.answer;
+    const isRight = typed.toLowerCase() === correct.toLowerCase() ||
+      lev(typed.toLowerCase(), correct.toLowerCase()) <= Math.floor(correct.length / 6);
+
+    VS.trackLessonResult(currentQ.word.id, isRight);
+    inp.style.borderColor = isRight ? '#27ae60' : '#e74c3c';
+
+    if (isRight) {
+      correctCount++;
+      showFeedback(true, '✓ Correct!', currentQ.explain);
+    } else {
+      wrongCount++;
+      hearts--;
+      updateHearts();
+      if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
+      showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
+      if (VS.hasTTS()) VS.speak(correct);
+    }
+    document.getElementById('btn-continue').classList.add('visible');
+  }
+
+  /* ── Sentence scramble ───────────────── */
+  let scrambleSelected = [], scrambleWords = [];
+
+  function renderScramble() {
+    scrambleSelected = [];
+    scrambleWords    = currentQ.scrambleWords.slice();
+    updateScrambleUI();
+  }
+
+  function updateScrambleUI() {
+    const used = new Set(scrambleSelected);
+    document.getElementById('scramble-answer').innerHTML = scrambleSelected
+      .map((idx, pos) =>
+        `<button class="word-tile in-answer" onclick="removeFromAnswer(${pos})">${scrambleWords[idx]}</button>`)
+      .join('');
+    document.getElementById('scramble-bank').innerHTML = scrambleWords
+      .map((w, idx) => used.has(idx)
+        ? `<button class="word-tile" disabled>${w}</button>`
+        : `<button class="word-tile" onclick="addToAnswer(${idx})">${w}</button>`)
+      .join('');
+  }
+
+  function addToAnswer(idx) {
+    if (answered) return;
+    scrambleSelected.push(idx);
+    if (scrambleSelected.length === scrambleWords.length) checkScramble();
+    else updateScrambleUI();
+  }
+
+  function removeFromAnswer(pos) {
+    if (answered) return;
+    scrambleSelected.splice(pos, 1);
+    updateScrambleUI();
+  }
+
+  function checkScramble() {
+    if (answered) return;
+    answered = true;
+    const assembled = scrambleSelected.map(idx => scrambleWords[idx]).join(' ');
+    const isRight   = assembled === currentQ.answer;
+
+    VS.trackLessonResult(currentQ.word.id, isRight);
+    document.querySelectorAll('.word-tile').forEach(t => { t.disabled = true; });
+
+    if (isRight) {
+      correctCount++;
+      showFeedback(true, '✓ Correct!', currentQ.explain);
+    } else {
+      wrongCount++;
+      hearts--;
+      updateHearts();
+      if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
+      showFeedback(false, '✗ Correct order: "' + currentQ.answer + '"', currentQ.explain);
+    }
+    document.getElementById('btn-continue').classList.add('visible');
+  }
+
+  function lev(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({length: m+1}, (_, i) =>
+      Array.from({length: n+1}, (_, j) => i ? (j ? 0 : i) : j));
+    for (let i = 1; i <= m; i++)
+      for (let j = 1; j <= n; j++)
+        dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] :
+          1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    return dp[m][n];
+  }
 
   function updateHearts() {
     const h = Math.max(0, hearts);

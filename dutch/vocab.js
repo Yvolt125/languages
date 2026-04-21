@@ -268,7 +268,7 @@ Return 2–4 items covering FUNDAMENTALLY different meanings only — do not lis
     async generateExamples(term, translation, partOfSpeech) {
       const PROMPT =
 `You are a Dutch language expert. Give 2 natural example sentences for the Dutch word "${term}" used specifically as "${translation}" (${partOfSpeech}). Return ONLY a JSON array — no other text:
-[{ "nl": "Dutch sentence using the word.", "en": "English translation." }, { "nl": "Another natural example.", "en": "English translation." }]`;
+[{ "es": "Dutch sentence using the word.", "en": "English translation." }, { "es": "Another natural example.", "en": "English translation." }]`;
       const text = await this._aiCall(PROMPT, 400);
       const data = this._parseJSON(text);
       return Array.isArray(data) ? data : [];
