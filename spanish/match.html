@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Match — Spanish</title>
+  <link rel="manifest" href="../manifest.json">
+  <meta name="theme-color" content="#1a252f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5;
+           min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: #1a252f; color: white; padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .back { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em; }
+    .back:hover { color: white; }
+    .round-label { font-size: 0.88em; color: rgba(255,255,255,0.7); }
+
+    .progress-bar { height: 5px; background: #2c3e50; flex-shrink: 0; }
+    .progress-fill { height: 100%; background: #27ae60; transition: width .3s; }
+
+    .screen { flex: 1; display: none; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    .center-box {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 32px 20px; gap: 14px; text-align: center;
+    }
+    .big-icon { font-size: 3.2em; }
+    h2 { font-size: 1.25em; font-weight: 800; color: #2c3e50; }
+    .sub { font-size: 0.88em; color: #7f8c8d; max-width: 300px; line-height: 1.5; }
+    .btn-primary {
+      padding: 14px 36px; background: #27ae60; color: white; border: none;
+      border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer;
+    }
+    .btn-secondary {
+      padding: 12px 28px; background: #f0f2f5; color: #7f8c8d; border: none;
+      border-radius: 14px; font-size: 0.88em; cursor: pointer;
+      text-decoration: none; display: inline-block;
+    }
+
+    /* ── Match screen ── */
+    #screen-match { padding: 20px 16px 24px; gap: 16px; }
+
+    .match-hint {
+      font-size: 0.72em; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 2px; color: #7f8c8d; text-align: center;
+    }
+
+    .match-grid { display: flex; gap: 10px; flex: 1; }
+    .match-col   { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+    .match-tile {
+      flex: 1; width: 100%; padding: 14px 10px;
+      background: white; border: 2px solid #e1e8ed; border-radius: 14px;
+      font-size: 0.88em; font-weight: 600; color: #2c3e50; cursor: pointer;
+      text-align: center; transition: border-color .15s, background .15s, color .15s;
+      line-height: 1.3; word-break: break-word;
+    }
+    .match-tile:hover:not(:disabled) { border-color: #27ae60; background: #eafaf1; }
+    .match-tile.selected { border-color: #27ae60; background: #eafaf1; color: #27ae60; }
+    .match-tile.correct  { border-color: #27ae60 !important; background: #eafaf1 !important;
+                           color: #27ae60 !important; cursor: default; }
+    .match-tile.wrong    { border-color: #e74c3c !important; background: #fdedec !important;
+                           color: #e74c3c !important; }
+    .match-tile:disabled { cursor: default; }
+
+    /* ── Finish screen ── */
+    .stars { font-size: 2.4em; letter-spacing: 6px; }
+    .score-row { display: flex; gap: 24px; justify-content: center; }
+    .sc { text-align: center; }
+    .sc-num { font-size: 2em; font-weight: 800; color: #27ae60; }
+    .sc-lbl { font-size: 0.75em; color: #7f8c8d; margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="index.html">← Spanish</a>
+  <span class="round-label" id="round-label">Round 1</span>
+</header>
+<div class="progress-bar">
+  <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+</div>
+
+<!-- Start screen -->
+<div class="screen active" id="screen-start">
+  <div class="center-box">
+    <div class="big-icon">🔗</div>
+    <h2>Match Pairs</h2>
+    <p class="sub" id="start-sub">Loading…</p>
+    <button class="btn-primary" id="btn-start" onclick="initMatch()">Begin</button>
+    <a class="btn-secondary" href="index.html">Back</a>
+  </div>
+</div>
+
+<!-- Match screen -->
+<div class="screen" id="screen-match">
+  <div class="match-hint">Tap a word, then its translation</div>
+  <div class="match-grid">
+    <div class="match-col" id="col-left"></div>
+    <div class="match-col" id="col-right"></div>
+  </div>
+</div>
+
+<!-- Finish screen -->
+<div class="screen" id="screen-finish">
+  <div class="center-box">
+    <div class="stars" id="finish-stars">⭐⭐⭐</div>
+    <h2>All matched!</h2>
+    <div class="score-row">
+      <div class="sc"><div class="sc-num" id="fin-rounds">0</div><div class="sc-lbl">Rounds</div></div>
+      <div class="sc"><div class="sc-num" id="fin-errors" style="color:#e74c3c">0</div><div class="sc-lbl">Misses</div></div>
+    </div>
+    <button class="btn-primary" onclick="initMatch()">Play Again</button>
+    <a class="btn-secondary" href="index.html">Back to Hub</a>
+  </div>
+</div>
+
+<script src="vocab.js"></script>
+<script>
+  const PAIR_SIZE = 4;
+  let pool = [], roundsDone = 0, totalRounds = 0, errors = 0;
+  let roundWords = [], leftOrder = [], rightOrder = [];
+  let leftSel = null, rightSel = null, matchedCount = 0;
+
+  function initMatch() {
+    const all = VS.getAll();
+    if (all.length < PAIR_SIZE) {
+      document.getElementById('start-sub').textContent =
+        'Add at least 4 vocabulary words before playing.';
+      document.getElementById('btn-start').textContent = 'Add Words';
+      document.getElementById('btn-start').onclick = () => location.href = 'index.html';
+      showScreen('screen-start');
+      return;
+    }
+
+    const now  = Date.now();
+    const due  = all.filter(w => (w.nextReview || 0) <= now)
+                    .sort((a, b) => (a.nextReview || 0) - (b.nextReview || 0));
+    const rest = shuffle(all.filter(w => (w.nextReview || 0) > now));
+    pool = [...due, ...rest];
+
+    totalRounds = Math.min(5, Math.floor(pool.length / PAIR_SIZE));
+    roundsDone  = 0;
+    errors      = 0;
+    showScreen('screen-match');
+    startRound();
+  }
+
+  function startRound() {
+    if (roundsDone >= totalRounds) { showDone(); return; }
+
+    const start = roundsDone * PAIR_SIZE;
+    roundWords  = pool.slice(start, start + PAIR_SIZE);
+
+    if (roundWords.length < PAIR_SIZE) {
+      const extras = shuffle(pool.filter(w => !roundWords.find(r => r.id === w.id)));
+      roundWords   = [...roundWords, ...extras.slice(0, PAIR_SIZE - roundWords.length)];
+    }
+
+    leftOrder  = shuffle([0, 1, 2, 3]);
+    rightOrder = shuffle([0, 1, 2, 3]);
+    leftSel    = null;
+    rightSel   = null;
+    matchedCount = 0;
+
+    renderRound();
+    updateProgress();
+  }
+
+  function renderRound() {
+    document.getElementById('col-left').innerHTML = leftOrder.map((wi, ti) =>
+      `<button class="match-tile" id="lt${ti}" onclick="selectLeft(${ti})">${escHtml(roundWords[wi].term)}</button>`
+    ).join('');
+    document.getElementById('col-right').innerHTML = rightOrder.map((wi, ri) =>
+      `<button class="match-tile" id="rt${ri}" onclick="selectRight(${ri})">${escHtml(roundWords[wi].translation)}</button>`
+    ).join('');
+  }
+
+  function selectLeft(ti) {
+    if (document.getElementById('lt' + ti).disabled) return;
+    if (leftSel === ti) {
+      document.getElementById('lt' + ti).classList.remove('selected');
+      leftSel = null;
+      return;
+    }
+    if (leftSel !== null) document.getElementById('lt' + leftSel).classList.remove('selected');
+    leftSel = ti;
+    document.getElementById('lt' + ti).classList.add('selected');
+    if (rightSel !== null) checkMatch();
+  }
+
+  function selectRight(ri) {
+    if (document.getElementById('rt' + ri).disabled) return;
+    if (rightSel === ri) {
+      document.getElementById('rt' + ri).classList.remove('selected');
+      rightSel = null;
+      return;
+    }
+    if (rightSel !== null) document.getElementById('rt' + rightSel).classList.remove('selected');
+    rightSel = ri;
+    document.getElementById('rt' + ri).classList.add('selected');
+    if (leftSel !== null) checkMatch();
+  }
+
+  function checkMatch() {
+    const ti = leftSel, ri = rightSel;
+    leftSel = null; rightSel = null;
+
+    const lBtn = document.getElementById('lt' + ti);
+    const rBtn = document.getElementById('rt' + ri);
+
+    if (leftOrder[ti] === rightOrder[ri]) {
+      lBtn.classList.remove('selected'); rBtn.classList.remove('selected');
+      lBtn.classList.add('correct');     rBtn.classList.add('correct');
+      lBtn.disabled = true;              rBtn.disabled = true;
+      VS.trackLessonResult(roundWords[leftOrder[ti]].id, true);
+      matchedCount++;
+      if (matchedCount === PAIR_SIZE) {
+        setTimeout(() => { roundsDone++; startRound(); }, 700);
+      }
+    } else {
+      errors++;
+      lBtn.classList.remove('selected'); rBtn.classList.remove('selected');
+      lBtn.classList.add('wrong');       rBtn.classList.add('wrong');
+      VS.trackLessonResult(roundWords[leftOrder[ti]].id, false);
+      setTimeout(() => {
+        lBtn.classList.remove('wrong');
+        rBtn.classList.remove('wrong');
+      }, 500);
+    }
+    updateProgress();
+  }
+
+  function updateProgress() {
+    document.getElementById('round-label').textContent =
+      'Round ' + (roundsDone + 1) + ' of ' + totalRounds;
+    const pct = totalRounds
+      ? Math.round(((roundsDone * PAIR_SIZE + matchedCount) / (totalRounds * PAIR_SIZE)) * 100)
+      : 0;
+    document.getElementById('prog-fill').style.width = pct + '%';
+  }
+
+  function showDone() {
+    const stars = errors === 0 ? '⭐⭐⭐' : errors <= 3 ? '⭐⭐' : errors <= 7 ? '⭐' : '💪';
+    document.getElementById('finish-stars').textContent  = stars;
+    document.getElementById('fin-rounds').textContent    = roundsDone;
+    document.getElementById('fin-errors').textContent    = errors;
+    VS.recordStudyDay();
+    showScreen('screen-finish');
+  }
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+
+  // Init start screen info
+  const all = VS.getAll();
+  if (all.length >= PAIR_SIZE) {
+    const now = Date.now();
+    const due = all.filter(w => (w.nextReview || 0) <= now).length;
+    document.getElementById('start-sub').textContent =
+      all.length + ' words · ' + due + ' due · up to 5 rounds of 4 pairs';
+  }
+</script>
+</body>
+</html>

@@ -68,6 +68,8 @@
     .study-card.flash  { border-left-color: #e67e22; }
     .study-card.lesson { border-left-color: #2980b9; }
     .study-card.weak   { border-left-color: #e67e22; }
+    .study-card.match  { border-left-color: #27ae60; }
+    .match  .sc-icon   { background: #eafaf1; }
     .study-card.disabled { opacity: 0.45; pointer-events: none; }
 
     .sc-icon {
@@ -386,6 +388,15 @@
         <div class="sc-sub">Multiple choice · fill-in-the-blank · wrong answers feed into flashcards</div>
       </div>
       <span class="sc-badge" id="badge-lesson">Quiz</span>
+    </a>
+
+    <a class="study-card match" href="match.html">
+      <div class="sc-icon">🔗</div>
+      <div class="sc-text">
+        <div class="sc-title">Match Pairs</div>
+        <div class="sc-sub">Tap words to match with their translations · due words first</div>
+      </div>
+      <span class="sc-badge">Play</span>
     </a>
 
     <a class="study-card weak" id="card-weak" href="flashcards.html?mode=weak">
