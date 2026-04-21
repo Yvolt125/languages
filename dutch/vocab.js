@@ -185,7 +185,13 @@
       if (trData.responseStatus !== 200) throw new Error(trData.responseDetails || 'Translation failed');
       const translation = trData.responseData.translatedText;
 
-      const result = { translation, definition: '', partOfSpeech: '', examples: [] };
+      const seen = new Set([translation.toLowerCase()]);
+      const altTranslations = (trData.matches || [])
+        .map(m => (m.translation || '').trim())
+        .filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
+        .slice(0, 5);
+
+      const result = { translation, altTranslations, definition: '', partOfSpeech: '', examples: [] };
 
       // Dictionary lookup for definition + POS
       try {

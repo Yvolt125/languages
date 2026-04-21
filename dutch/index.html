@@ -304,6 +304,16 @@
                       font-size: 0.85em; color: #2c3e50; cursor: pointer; }
     .export-srs-row input { cursor: pointer; }
 
+    /* ── Translation alternatives ── */
+    .trans-alts { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; min-height: 0; }
+    .trans-alt-chip {
+      background: none; border: 1.5px solid #e1e8ed; border-radius: 20px;
+      padding: 3px 10px; font-size: 0.75em; cursor: pointer; color: #7f8c8d;
+      transition: background .15s, border-color .15s;
+    }
+    .trans-alt-chip:hover  { background: #fef5e7; border-color: #e67e22; color: #e67e22; }
+    .trans-alt-chip.active { background: #fef5e7; border-color: #e67e22; color: #e67e22; }
+
     /* ── Definition picker ── */
     .def-picker { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
     .def-option {
@@ -398,6 +408,7 @@
         <div class="form-group">
           <label>English Translation</label>
           <input id="f-trans" type="text" placeholder="to speak">
+          <div class="trans-alts" id="f-trans-alts"></div>
         </div>
         <div class="form-group" style="max-width:130px">
           <label>Part of Speech</label>
@@ -543,6 +554,7 @@
     <div class="form-group">
       <label>English Translation</label>
       <input id="e-trans" type="text">
+      <div class="trans-alts" id="e-trans-alts"></div>
     </div>
     <div class="form-group">
       <label>Definition <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
@@ -761,6 +773,7 @@
   function closeEdit() {
     document.getElementById('edit-modal').classList.remove('open');
     editId = null; editExamples = [];
+    renderTransAlts('e-trans-alts', 'e-trans', []);
   }
 
   function editAddExample() {
@@ -825,8 +838,9 @@
       if (data.definition)   document.getElementById('e-def').value   = data.definition;
       if (data.partOfSpeech) document.getElementById('e-pos').value   = data.partOfSpeech;
       if (data.examples?.length) { editExamples = data.examples; renderEditExamples(); }
+      renderTransAlts('e-trans-alts', 'e-trans', data.altTranslations);
       renderDefPicker('e-def-picker', 'e-def', 'e-pos', data.definitions, 0);
-      setEditMsg('ok', '✅ Filled — pick a definition below if needed.');
+      setEditMsg('ok', '✅ Filled — edit translation or pick a definition if needed.');
     } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
     btn.disabled = false; btn.textContent = '🔤 Auto-fill';
   }
@@ -900,6 +914,7 @@
     });
     ['f-term','f-trans','f-def','f-pos','f-tags'].forEach(id =>
       document.getElementById(id).value = '');
+    renderTransAlts('f-trans-alts', 'f-trans', []);
     pendingExamples = [];
     renderExamples();
     renderDefPicker('f-def-picker', 'f-def', 'f-pos', [], 0);
@@ -907,6 +922,21 @@
     refreshStats();
     renderTagChips();
     renderList();
+  }
+
+  /* ── Translation alternatives ──────────── */
+  function renderTransAlts(altsDivId, transInputId, alts) {
+    const el = document.getElementById(altsDivId);
+    if (!alts || !alts.length) { el.innerHTML = ''; return; }
+    el.innerHTML = alts.map(t =>
+      `<button type="button" class="trans-alt-chip" onclick="pickTransAlt('${altsDivId}','${transInputId}',${JSON.stringify(t)})">${esc(t)}</button>`
+    ).join('');
+  }
+
+  function pickTransAlt(altsDivId, transInputId, val) {
+    document.getElementById(transInputId).value = val;
+    document.getElementById(altsDivId).querySelectorAll('.trans-alt-chip')
+      .forEach(c => c.classList.toggle('active', c.textContent === val));
   }
 
   /* ── Definition picker ──────────────────── */
@@ -945,8 +975,9 @@
       if (data.definition)   document.getElementById('f-def').value   = data.definition;
       if (data.partOfSpeech) document.getElementById('f-pos').value   = data.partOfSpeech;
       if (data.examples?.length) { pendingExamples = data.examples; renderExamples(); }
+      renderTransAlts('f-trans-alts', 'f-trans', data.altTranslations);
       renderDefPicker('f-def-picker', 'f-def', 'f-pos', data.definitions, 0);
-      setGenMsg('ok', '✅ Filled — pick a definition below if needed, then save.');
+      setGenMsg('ok', '✅ Filled — edit translation or pick a definition if needed.');
     } catch(e) {
       setGenMsg('err', '⚠️ ' + e.message);
     }
