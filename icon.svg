@@ -1,13 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#1a252f"/>
-  <circle cx="50" cy="50" r="35" fill="none" stroke="#ecf0f1" stroke-width="4"/>
-  <circle cx="50" cy="50" r="3" fill="#e74c3c"/>
-  <path d="M 50 25 L 58 50 L 50 75 L 42 50 Z" fill="#e74c3c"/>
-  <path d="M 50 25 L 50 75 L 42 50 Z" fill="#c0392b"/>
-  <g stroke="#ecf0f1" stroke-width="2">
-    <line x1="50" y1="15" x2="50" y2="22"/>
-    <line x1="50" y1="78" x2="50" y2="85"/>
-    <line x1="15" y1="50" x2="22" y2="50"/>
-    <line x1="78" y1="50" x2="85" y2="50"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#1a252f"/>
+
+  <!-- Tail (curled inward) -->
+  <path d="M310 310 Q370 290 365 345 Q358 390 320 375 Q300 365 308 345"
+        fill="none" stroke="#2ecc71" stroke-width="26" stroke-linecap="round"/>
+
+  <!-- Body -->
+  <ellipse cx="230" cy="295" rx="105" ry="72" fill="#2ecc71"/>
+
+  <!-- Neck -->
+  <ellipse cx="205" cy="225" rx="42" ry="52" fill="#2ecc71"/>
+
+  <!-- Head -->
+  <ellipse cx="192" cy="172" rx="60" ry="52" fill="#2ecc71"/>
+
+  <!-- Snout -->
+  <ellipse cx="143" cy="178" rx="32" ry="18" fill="#27ae60"/>
+
+  <!-- Belly highlight -->
+  <ellipse cx="225" cy="305" rx="70" ry="44" fill="#27ae60" opacity="0.4"/>
+
+  <!-- Eye -->
+  <circle cx="205" cy="153" r="24" fill="#1a252f"/>
+  <circle cx="205" cy="153" r="17" fill="white"/>
+  <circle cx="208" cy="153" r="10" fill="#1a252f"/>
+  <circle cx="213" cy="148" r="4" fill="white"/>
+
+  <!-- Dorsal crest -->
+  <ellipse cx="210" cy="122" rx="9" ry="13" fill="#27ae60"/>
+  <ellipse cx="230" cy="116" rx="8" ry="11" fill="#27ae60"/>
+  <ellipse cx="249" cy="113" rx="7" ry="10" fill="#27ae60"/>
+  <ellipse cx="267" cy="115" rx="6" ry="9" fill="#27ae60"/>
+
+  <!-- Front leg -->
+  <path d="M188 345 Q172 382 152 392 Q138 397 143 377 Q148 360 165 354 Q177 348 183 338"
+        fill="#2ecc71"/>
+
+  <!-- Back leg -->
+  <path d="M285 350 Q294 386 279 400 Q264 412 260 392 Q256 372 270 365 Q280 359 285 350"
+        fill="#2ecc71"/>
 </svg>
