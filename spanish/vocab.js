@@ -254,7 +254,7 @@ Include all distinct meanings (different parts of speech, idiomatic vs literal, 
         }
         const data = await resp.json();
         const text = (data.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-        const match = text.match(/\{[\s\S]*\}/);
+        const match = text.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
         if (!match) throw new Error('Could not parse AI response');
         return JSON.parse(match[0]);
       }
@@ -282,7 +282,7 @@ Include all distinct meanings (different parts of speech, idiomatic vs literal, 
       }
       const data = await resp.json();
       const text = (data.content?.[0]?.text || '').trim();
-      const match = text.match(/\{[\s\S]*\}/);
+      const match = text.match(/(\[[\s\S]*\]|\{[\s\S]*\})/);
       if (!match) throw new Error('Could not parse AI response');
       return JSON.parse(match[0]);
     }
