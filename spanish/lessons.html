@@ -143,6 +143,20 @@
     .word-tile:hover:not(:disabled) { border-color: #2980b9; }
     .word-tile:disabled { opacity: 0.4; cursor: default; }
     .word-tile.in-answer { border-color: #2980b9; background: #eaf4fb; }
+    .mp-grid { display: flex; gap: 10px; }
+    .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .mp-tile {
+      flex: 1; width: 100%; padding: 13px 10px;
+      background: white; border: 2px solid #e1e8ed; border-radius: 14px;
+      font-size: 0.85em; font-weight: 600; color: #2c3e50; cursor: pointer;
+      text-align: center; transition: border-color .15s, background .15s;
+      line-height: 1.3; word-break: break-word;
+    }
+    .mp-tile:hover:not(:disabled) { border-color: #2980b9; background: #eaf4fb; }
+    .mp-tile.selected { border-color: #2980b9; background: #eaf4fb; color: #2980b9; }
+    .mp-tile.correct  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60 !important; }
+    .mp-tile.wrong    { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c !important; }
+    .mp-tile:disabled { cursor: default; }
   </style>
 </head>
 <body>
@@ -185,6 +199,10 @@
   <div class="scramble-area" id="scramble-area" style="display:none">
     <div class="scramble-answer" id="scramble-answer"></div>
     <div class="scramble-bank"   id="scramble-bank"></div>
+  </div>
+  <div class="mp-grid" id="mp-grid" style="display:none">
+    <div class="mp-col" id="mp-col-left"></div>
+    <div class="mp-col" id="mp-col-right"></div>
   </div>
   <div class="feedback" id="feedback">
     <div class="fb-head" id="fb-head"></div>
@@ -247,7 +265,17 @@
     const rest = shuffle(all.filter(w => (w.nextReview || 0) > now));
     const pool = shuffle([...due, ...rest]).slice(0, SESSION_SIZE);
 
-    questions   = pool.map(w => makeQuestion(w, all)).filter(Boolean);
+    const indivQs = pool.map(w => makeQuestion(w, all)).filter(Boolean);
+    const matchRounds = [];
+    for (let i = 0; i + 3 < pool.length; i += 4)
+      matchRounds.push({ type: 'match-pairs', label: 'Match each word with its translation', words: pool.slice(i, i + 4) });
+    questions = [];
+    let mi = 0;
+    indivQs.forEach((q, idx) => {
+      questions.push(q);
+      if ((idx + 1) % 4 === 0 && mi < matchRounds.length) questions.push(matchRounds[mi++]);
+    });
+    if (mi < matchRounds.length) questions.push(...matchRounds.slice(mi));
     wrongWords  = [];
     qIndex      = 0;
     hearts      = 3;
@@ -407,13 +435,16 @@
     const ttsBtn = document.getElementById('btn-tts');
     ttsBtn.style.display = (VS.hasTTS() && (currentQ.audio || currentQ.lang === 'es')) ? '' : 'none';
 
-    const isType     = currentQ.type === 'type-word' || currentQ.type === 'listen-type';
+    const isType     = currentQ.type === 'type-word'       || currentQ.type === 'listen-type';
     const isScramble = currentQ.type === 'sentence-scramble';
-    document.getElementById('choices').style.display       = (!isType && !isScramble) ? '' : 'none';
-    document.getElementById('type-area').style.display     = isType     ? '' : 'none';
-    document.getElementById('scramble-area').style.display = isScramble ? '' : 'none';
+    const isMatch    = currentQ.type === 'match-pairs';
+    document.getElementById('q-prompt').style.display         = isMatch    ? 'none' : '';
+    document.getElementById('choices').style.display          = (!isType && !isScramble && !isMatch) ? '' : 'none';
+    document.getElementById('type-area').style.display        = isType     ? '' : 'none';
+    document.getElementById('scramble-area').style.display    = isScramble ? '' : 'none';
+    document.getElementById('mp-grid').style.display          = isMatch    ? '' : 'none';
 
-    if (!isType && !isScramble) {
+    if (!isType && !isScramble && !isMatch) {
       document.getElementById('choices').innerHTML = currentQ.options.map((opt, i) =>
         `<button class="choice-btn" id="c${i}" onclick="choose(${i})">${opt}</button>`
       ).join('');
@@ -424,6 +455,7 @@
       setTimeout(() => inp.focus(), 50);
     }
     if (isScramble) renderScramble();
+    if (isMatch)    renderMatchPairs();
     if (currentQ.audio) setTimeout(() => VS.speak(currentQ.audio), 400);
 
     document.getElementById('feedback').className = 'feedback';
@@ -617,6 +649,75 @@
         dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] :
           1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
     return dp[m][n];
+  }
+
+  /* ── Match pairs ─────────────────────── */
+  let mpLeftSel = null, mpRightSel = null, mpMatched = 0;
+  let mpLeftOrder = [], mpRightOrder = [], mpWords = [];
+
+  function renderMatchPairs() {
+    mpLeftSel = null; mpRightSel = null; mpMatched = 0;
+    mpWords      = currentQ.words;
+    mpLeftOrder  = shuffle([0, 1, 2, 3]);
+    mpRightOrder = shuffle([0, 1, 2, 3]);
+    document.getElementById('mp-col-left').innerHTML = mpLeftOrder.map((wi, ti) =>
+      `<button class="mp-tile" id="mlt${ti}" onclick="mpSelectLeft(${ti})">${escHtml(mpWords[wi].term)}</button>`
+    ).join('');
+    document.getElementById('mp-col-right').innerHTML = mpRightOrder.map((wi, ri) =>
+      `<button class="mp-tile" id="mrt${ri}" onclick="mpSelectRight(${ri})">${escHtml(mpWords[wi].translation)}</button>`
+    ).join('');
+  }
+
+  function mpSelectLeft(ti) {
+    if (document.getElementById('mlt' + ti).disabled) return;
+    if (mpLeftSel === ti) {
+      document.getElementById('mlt' + ti).classList.remove('selected');
+      mpLeftSel = null; return;
+    }
+    if (mpLeftSel !== null) document.getElementById('mlt' + mpLeftSel).classList.remove('selected');
+    mpLeftSel = ti;
+    document.getElementById('mlt' + ti).classList.add('selected');
+    if (mpRightSel !== null) mpCheckMatch();
+  }
+
+  function mpSelectRight(ri) {
+    if (document.getElementById('mrt' + ri).disabled) return;
+    if (mpRightSel === ri) {
+      document.getElementById('mrt' + ri).classList.remove('selected');
+      mpRightSel = null; return;
+    }
+    if (mpRightSel !== null) document.getElementById('mrt' + mpRightSel).classList.remove('selected');
+    mpRightSel = ri;
+    document.getElementById('mrt' + ri).classList.add('selected');
+    if (mpLeftSel !== null) mpCheckMatch();
+  }
+
+  function mpCheckMatch() {
+    const ti = mpLeftSel, ri = mpRightSel;
+    mpLeftSel = null; mpRightSel = null;
+    const lBtn = document.getElementById('mlt' + ti);
+    const rBtn = document.getElementById('mrt' + ri);
+
+    if (mpLeftOrder[ti] === mpRightOrder[ri]) {
+      lBtn.classList.remove('selected'); rBtn.classList.remove('selected');
+      lBtn.classList.add('correct');     rBtn.classList.add('correct');
+      lBtn.disabled = true;              rBtn.disabled = true;
+      VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, true);
+      mpMatched++;
+      if (mpMatched === mpWords.length) setTimeout(() => nextQuestion(), 700);
+    } else {
+      wrongCount++; hearts--; updateHearts();
+      if (!wrongWords.find(w => w.id === mpWords[mpLeftOrder[ti]].id))
+        wrongWords.push(mpWords[mpLeftOrder[ti]]);
+      VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, false);
+      lBtn.classList.remove('selected'); rBtn.classList.remove('selected');
+      lBtn.classList.add('wrong');       rBtn.classList.add('wrong');
+      setTimeout(() => { lBtn.classList.remove('wrong'); rBtn.classList.remove('wrong'); }, 500);
+    }
+  }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function updateHearts() {
