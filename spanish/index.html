@@ -1435,11 +1435,12 @@
   function generateCSV() {
     const words = VS.getAll();
     const csvQ  = v => '"' + String(v || '').replace(/"/g, '""') + '"';
-    const rows  = [['term','translation','partOfSpeech','definition'].map(csvQ).join(',')];
+    const rows  = [['term','translation','partOfSpeech','definition','examples'].map(csvQ).join(',')];
     words.forEach(w => {
-      rows.push([w.term, w.translation, w.partOfSpeech, w.definition].map(csvQ).join(','));
+      const examples = (w.examples || []).join(' | ');
+      rows.push([w.term, w.translation, w.partOfSpeech, w.definition, examples].map(csvQ).join(','));
     });
-    return rows.join('\r\n');
+    return '﻿' + rows.join('\r\n');
   }
 
   function generateJSON() {
