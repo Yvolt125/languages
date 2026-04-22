@@ -190,6 +190,32 @@
     .fc-type-input { width: 100%; padding: 12px 14px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1em; font-family: inherit; outline: none; text-align: center; }
     .fc-type-input:focus { border-color: #2980b9; }
     .btn-fc-check { padding: 12px; background: #2980b9; color: white; border: none; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; }
+
+    /* ── Animations ── */
+    @keyframes slide-up-fade {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes star-bounce {
+      from { opacity: 0; transform: scale(0); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .q-anim > * { animation: slide-up-fade 0.4s ease both; }
+    .q-anim > *:nth-child(1) { animation-delay: 0.05s; }
+    .q-anim > *:nth-child(2) { animation-delay: 0.12s; }
+    .q-anim > *:nth-child(3) { animation-delay: 0.18s; }
+    .q-anim > *:nth-child(4) { animation-delay: 0.24s; }
+    .q-anim > *:nth-child(5) { animation-delay: 0.30s; }
+
+    .fin-anim > * { animation: slide-up-fade 0.4s ease both; }
+    .fin-anim > *:nth-child(1) { animation-delay: 0.08s; }
+    .fin-anim > *:nth-child(2) { animation-delay: 0.18s; }
+    .fin-anim > *:nth-child(3) { animation-delay: 0.28s; }
+    .fin-anim > *:nth-child(4) { animation-delay: 0.38s; }
+    .fin-anim > *:nth-child(5) { animation-delay: 0.46s; }
+    .fin-anim > *:nth-child(6) { animation-delay: 0.54s; }
+
+    .star-pop { display: inline-block; animation: star-bounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
   </style>
 </head>
 <body>
@@ -216,7 +242,7 @@
 <!-- Question screen -->
 <div class="screen" id="screen-q">
   <div class="q-label"    id="q-label"></div>
-  <div class="q-prompt">
+  <div class="q-prompt" id="q-prompt">
     <div class="prompt-word" id="prompt-word"></div>
     <div class="prompt-hint" id="prompt-hint"></div>
     <button class="btn-tts" id="btn-tts" style="display:none" onclick="speakPrompt()">🔊 Listen</button>
@@ -271,7 +297,7 @@
 
 <!-- Finish screen -->
 <div class="screen" id="screen-finish">
-  <div class="center-box">
+  <div class="center-box" id="finish-center">
     <div class="stars"  id="finish-stars">⭐⭐⭐</div>
     <h2>Lesson complete!</h2>
     <div class="score-row">
@@ -531,7 +557,7 @@
     if (isType) {
       const inp = document.getElementById('type-input');
       inp.value = ''; inp.disabled = false; inp.style.borderColor = '';
-      setTimeout(() => inp.focus(), 50);
+      requestAnimationFrame(() => requestAnimationFrame(() => inp.focus()));
     }
     if (isScramble)  renderScramble();
     if (isMatch)     renderMatchPairs();
@@ -541,6 +567,13 @@
 
     document.getElementById('feedback').className = 'feedback';
     document.getElementById('btn-continue').classList.remove('visible');
+
+    // Trigger question animation
+    const sq = document.getElementById('screen-q');
+    sq.classList.remove('q-anim');
+    void sq.offsetWidth;
+    sq.classList.add('q-anim');
+
     updateProgress();
   }
 
@@ -566,11 +599,13 @@
 
     if (isRight) {
       correctCount++;
+      playSound('correct');
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++;
       hearts--;
       updateHearts();
+      playSound('wrong');
       // Track for end-of-lesson summary
       if (!wrongWords.find(w => w.id === currentQ.word.id)) {
         wrongWords.push(currentQ.word);
@@ -604,10 +639,13 @@
     const stars = h >= 3 ? '⭐⭐⭐' : h >= 2 ? '⭐⭐' : h >= 1 ? '⭐' : '💪';
     const xp    = correctCount * 10;
 
-    document.getElementById('finish-stars').textContent   = stars;
-    document.getElementById('fin-correct').textContent    = correctCount;
-    document.getElementById('fin-wrong').textContent      = wrongCount;
-    document.getElementById('fin-xp').textContent         = xp;
+    document.getElementById('finish-stars').innerHTML =
+      [...stars].map((s, i) =>
+        `<span class="star-pop" style="animation-delay:${0.08 + i * 0.14}s">${s}</span>`
+      ).join('');
+    document.getElementById('fin-correct').textContent = correctCount;
+    document.getElementById('fin-wrong').textContent   = wrongCount;
+    document.getElementById('fin-xp').textContent      = xp;
 
     // Show weak words summary if any
     const weakSummary = document.getElementById('weak-summary');
@@ -625,6 +663,14 @@
     }
 
     VS.recordStudyDay();
+
+    // Trigger finish animation
+    const finishCenter = document.getElementById('finish-center');
+    finishCenter.classList.remove('fin-anim');
+    void finishCenter.offsetWidth;
+    finishCenter.classList.add('fin-anim');
+
+    playSound('finish');
     showScreen('screen-finish');
   }
 
@@ -652,11 +698,13 @@
 
     if (isRight) {
       correctCount++;
+      playSound('correct');
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++;
       hearts--;
       updateHearts();
+      playSound('wrong');
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
       if (VS.hasTTS()) VS.speak(correct);
@@ -710,11 +758,13 @@
 
     if (isRight) {
       correctCount++;
+      playSound('correct');
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++;
       hearts--;
       updateHearts();
+      playSound('wrong');
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ Correct order: "' + currentQ.answer + '"', currentQ.explain);
     }
@@ -784,10 +834,12 @@
       lBtn.classList.add('correct');     rBtn.classList.add('correct');
       lBtn.disabled = true;              rBtn.disabled = true;
       VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, true);
+      playSound('correct');
       mpMatched++;
       if (mpMatched === mpWords.length) setTimeout(() => nextQuestion(), 700);
     } else {
       wrongCount++; hearts--; updateHearts();
+      playSound('wrong');
       if (!wrongWords.find(w => w.id === mpWords[mpLeftOrder[ti]].id))
         wrongWords.push(mpWords[mpLeftOrder[ti]]);
       VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, false);
@@ -832,7 +884,7 @@
     document.getElementById('fc-btn-tts').style.display   = 'none';
     const inp = document.getElementById('fc-type-input');
     inp.value = ''; inp.disabled = false; inp.style.borderColor = '';
-    setTimeout(() => inp.focus(), 50);
+    requestAnimationFrame(() => requestAnimationFrame(() => inp.focus()));
   }
 
   function onFcClick() {
@@ -851,9 +903,11 @@
     VS.trackLessonResult(currentQ.word.id, isCorrect);
     if (isCorrect) {
       correctCount++;
+      playSound('correct');
       showFeedback(true, '✓ Marked correct', currentQ.word.translation);
     } else {
       wrongCount++; hearts--; updateHearts();
+      playSound('wrong');
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ Marked wrong', '"' + currentQ.word.term + '" = "' + currentQ.word.translation + '"');
     }
@@ -879,9 +933,11 @@
     VS.trackLessonResult(currentQ.word.id, isRight);
     if (isRight) {
       correctCount++;
+      playSound('correct');
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++; hearts--; updateHearts();
+      playSound('wrong');
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
     }
@@ -915,6 +971,36 @@
 
   function escRe(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function playSound(type) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const go = () => {
+        const note = (freq, start, dur, wave = 'sine', vol = 0.28) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = wave;
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+          gain.gain.setValueAtTime(vol, ctx.currentTime + start);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+          osc.start(ctx.currentTime + start);
+          osc.stop(ctx.currentTime + start + dur + 0.05);
+        };
+        if (type === 'correct') {
+          note(523, 0,    0.12);
+          note(659, 0.10, 0.18);
+        } else if (type === 'wrong') {
+          note(220, 0, 0.25, 'sawtooth', 0.22);
+        } else if (type === 'finish') {
+          note(523, 0,    0.12);
+          note(659, 0.13, 0.12);
+          note(784, 0.26, 0.30);
+        }
+      };
+      if (ctx.state === 'suspended') ctx.resume().then(go); else go();
+    } catch(e) {}
   }
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
