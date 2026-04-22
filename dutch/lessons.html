@@ -157,6 +157,39 @@
     .mp-tile.correct  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60 !important; }
     .mp-tile.wrong    { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c !important; }
     .mp-tile:disabled { cursor: default; }
+
+    /* ── Flip card ── */
+    #card-area { perspective: 1200px; min-height: 175px; flex: 1; position: relative; }
+    .fc-wrap {
+      width: 100%; height: 100%; min-height: 175px;
+      transform-style: preserve-3d;
+      transition: transform .42s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+    .fc-wrap.flipped { transform: rotateY(180deg); }
+    .fc-front, .fc-back {
+      position: absolute; inset: 0; min-height: 175px;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      background: white; border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 16px 20px; cursor: pointer;
+      border-top: 4px solid #2980b9;
+    }
+    .fc-back { transform: rotateY(180deg); justify-content: flex-start; }
+    .fc-term { font-size: 2em; font-weight: 800; color: #2c3e50; text-align: center; line-height: 1.2; }
+    .fc-tap-hint { font-size: 0.75em; color: #bdc3c7; margin-top: 14px; }
+    .fc-back-trans { font-size: 1.5em; font-weight: 800; color: #2980b9; text-align: center; margin-bottom: 6px; }
+    .fc-back-def { font-size: 0.84em; color: #7f8c8d; text-align: center; line-height: 1.5; margin-top: 8px; }
+    .fc-grade-row { display: none; gap: 10px; }
+    .fc-grade-row.visible { display: flex; }
+    .btn-grade-wrong { flex: 1; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
+    .btn-grade-correct { flex: 1; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
+    .fc-type-area { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; width: 100%; }
+    .fc-type-input { width: 100%; padding: 12px 14px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1em; font-family: inherit; outline: none; text-align: center; }
+    .fc-type-input:focus { border-color: #2980b9; }
+    .btn-fc-check { padding: 12px; background: #2980b9; color: white; border: none; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -204,6 +237,31 @@
     <div class="mp-col" id="mp-col-left"></div>
     <div class="mp-col" id="mp-col-right"></div>
   </div>
+  <div id="card-area" style="display:none">
+    <div class="fc-wrap" id="fc-wrap" onclick="onFcClick()">
+      <div class="fc-front" id="fc-front">
+        <div class="fc-term" id="fc-term"></div>
+        <div class="fc-tap-hint" id="fc-tap-hint">tap to reveal</div>
+        <button class="btn-tts" id="fc-btn-tts" style="display:none"
+                onclick="event.stopPropagation(); VS.speak(currentQ.word.term)">🔊 Listen</button>
+        <div class="fc-type-area" id="fc-type-area" style="display:none">
+          <input class="fc-type-input" id="fc-type-input" type="text"
+                 placeholder="Type the Dutch word…"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 onkeydown="if(event.key==='Enter')submitFcType()">
+          <button class="btn-fc-check" onclick="submitFcType()">Check →</button>
+        </div>
+      </div>
+      <div class="fc-back" id="fc-back">
+        <div class="fc-back-trans" id="fc-back-trans"></div>
+        <div class="fc-back-def"   id="fc-back-def"></div>
+      </div>
+    </div>
+    <div class="fc-grade-row" id="fc-grade-row">
+      <button class="btn-grade-wrong"   onclick="fcGrade(false)">✗ Wrong</button>
+      <button class="btn-grade-correct" onclick="fcGrade(true)">✓ Correct</button>
+    </div>
+  </div>
   <div class="feedback" id="feedback">
     <div class="fb-head" id="fb-head"></div>
     <div class="fb-body" id="fb-body"></div>
@@ -222,7 +280,7 @@
       <div class="sc"><div class="sc-num" id="fin-xp">0</div><div class="sc-lbl">XP</div></div>
     </div>
     <div class="weak-summary" id="weak-summary" style="display:none">
-      <h3>💪 Added to Weak Words — review these in flashcards:</h3>
+      <h3>💪 Added to Weak Words — these will appear more often:</h3>
       <div id="weak-list"></div>
     </div>
     <button class="btn-primary" onclick="startLesson()">Play Again</button>
@@ -294,7 +352,7 @@
     if (others.length < 3) return null;
     const dist = others.slice(0, 3);
 
-    const types = ['es-to-en', 'en-to-es', 'type-word'];
+    const types = ['es-to-en', 'en-to-es', 'type-word', 'flip-card', 'type-card'];
     if (VS.hasTTS()) types.push('listen-pick', 'listen-type');
     if (word.examples && word.examples.length) {
       types.push('example-ctx');
@@ -408,6 +466,23 @@
         explain: 'Full sentence: "' + ex.es + '"'
       };
     }
+    if (type === 'flip-card') {
+      return {
+        word, type,
+        label: 'Tap to flip — then grade yourself',
+        prompt: '', lang: 'nl', hint: ''
+      };
+    }
+    if (type === 'type-card') {
+      return {
+        word, type,
+        label:   'Type the Dutch word',
+        prompt:  '', lang: 'en',
+        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        answer:  word.term,
+        explain: '"' + word.translation + '" → "' + word.term + '"'
+      };
+    }
     return null;
   }
 
@@ -438,13 +513,17 @@
     const isType     = currentQ.type === 'type-word'       || currentQ.type === 'listen-type';
     const isScramble = currentQ.type === 'sentence-scramble';
     const isMatch    = currentQ.type === 'match-pairs';
-    document.getElementById('q-prompt').style.display         = isMatch    ? 'none' : '';
-    document.getElementById('choices').style.display          = (!isType && !isScramble && !isMatch) ? '' : 'none';
+    const isFlipCard = currentQ.type === 'flip-card';
+    const isTypeCard = currentQ.type === 'type-card';
+    const isCard     = isFlipCard || isTypeCard;
+    document.getElementById('q-prompt').style.display         = (isMatch || isCard) ? 'none' : '';
+    document.getElementById('choices').style.display          = (!isType && !isScramble && !isMatch && !isCard) ? '' : 'none';
     document.getElementById('type-area').style.display        = isType     ? '' : 'none';
     document.getElementById('scramble-area').style.display    = isScramble ? '' : 'none';
     document.getElementById('mp-grid').style.display          = isMatch    ? '' : 'none';
+    document.getElementById('card-area').style.display        = isCard     ? '' : 'none';
 
-    if (!isType && !isScramble && !isMatch) {
+    if (!isType && !isScramble && !isMatch && !isCard) {
       document.getElementById('choices').innerHTML = currentQ.options.map((opt, i) =>
         `<button class="choice-btn" id="c${i}" onclick="choose(${i})">${opt}</button>`
       ).join('');
@@ -454,8 +533,10 @@
       inp.value = ''; inp.disabled = false; inp.style.borderColor = '';
       setTimeout(() => inp.focus(), 50);
     }
-    if (isScramble) renderScramble();
-    if (isMatch)    renderMatchPairs();
+    if (isScramble)  renderScramble();
+    if (isMatch)     renderMatchPairs();
+    if (isFlipCard)  renderFlipCard();
+    if (isTypeCard)  renderTypeCard();
     if (currentQ.audio) setTimeout(() => VS.speak(currentQ.audio), 400);
 
     document.getElementById('feedback').className = 'feedback';
@@ -718,6 +799,93 @@
 
   function escHtml(s) {
     return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function normalise(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  }
+
+  /* ── Flip card ───────────────────────── */
+  let fcRevealed = false;
+
+  function renderFlipCard() {
+    fcRevealed = false;
+    document.getElementById('fc-wrap').classList.remove('flipped');
+    document.getElementById('fc-term').textContent       = currentQ.word.term;
+    document.getElementById('fc-back-trans').textContent = currentQ.word.translation;
+    document.getElementById('fc-back-def').textContent   = currentQ.word.definition || '';
+    document.getElementById('fc-tap-hint').style.display  = '';
+    document.getElementById('fc-type-area').style.display = 'none';
+    document.getElementById('fc-grade-row').classList.remove('visible');
+    document.getElementById('fc-btn-tts').style.display   = VS.hasTTS() ? '' : 'none';
+  }
+
+  function renderTypeCard() {
+    fcRevealed = false;
+    document.getElementById('fc-wrap').classList.remove('flipped');
+    document.getElementById('fc-term').textContent        = currentQ.word.translation;
+    document.getElementById('fc-back-trans').textContent  = currentQ.word.term;
+    document.getElementById('fc-back-def').textContent    = currentQ.word.definition || '';
+    document.getElementById('fc-tap-hint').style.display  = 'none';
+    document.getElementById('fc-type-area').style.display = '';
+    document.getElementById('fc-grade-row').classList.remove('visible');
+    document.getElementById('fc-btn-tts').style.display   = 'none';
+    const inp = document.getElementById('fc-type-input');
+    inp.value = ''; inp.disabled = false; inp.style.borderColor = '';
+    setTimeout(() => inp.focus(), 50);
+  }
+
+  function onFcClick() {
+    if (answered || currentQ.type === 'type-card') return;
+    if (!fcRevealed) {
+      document.getElementById('fc-wrap').classList.add('flipped');
+      document.getElementById('fc-grade-row').classList.add('visible');
+      if (VS.hasTTS()) VS.speak(currentQ.word.term);
+      fcRevealed = true;
+    }
+  }
+
+  function fcGrade(isCorrect) {
+    if (answered) return;
+    answered = true;
+    VS.trackLessonResult(currentQ.word.id, isCorrect);
+    if (isCorrect) {
+      correctCount++;
+      showFeedback(true, '✓ Marked correct', currentQ.word.translation);
+    } else {
+      wrongCount++; hearts--; updateHearts();
+      if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
+      showFeedback(false, '✗ Marked wrong', '"' + currentQ.word.term + '" = "' + currentQ.word.translation + '"');
+    }
+    document.getElementById('fc-grade-row').classList.remove('visible');
+    document.getElementById('btn-continue').classList.add('visible');
+  }
+
+  function submitFcType() {
+    if (answered) return;
+    const inp   = document.getElementById('fc-type-input');
+    const typed = inp.value.trim();
+    if (!typed) return;
+    answered = true; inp.disabled = true;
+    const correct   = currentQ.answer;
+    const normTyped = normalise(typed);
+    const normCorr  = normalise(correct);
+    const dist      = lev(normTyped, normCorr);
+    const isRight   = normTyped === normCorr || (dist <= 1 && normTyped.length > 1);
+    inp.style.borderColor = isRight ? '#27ae60' : '#e74c3c';
+    document.getElementById('fc-wrap').classList.add('flipped');
+    fcRevealed = true;
+    if (VS.hasTTS()) VS.speak(currentQ.word.term);
+    VS.trackLessonResult(currentQ.word.id, isRight);
+    if (isRight) {
+      correctCount++;
+      showFeedback(true, '✓ Correct!', currentQ.explain);
+    } else {
+      wrongCount++; hearts--; updateHearts();
+      if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
+      showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
+    }
+    document.getElementById('btn-continue').classList.add('visible');
   }
 
   function updateHearts() {

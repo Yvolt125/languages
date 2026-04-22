@@ -372,34 +372,16 @@
   <div class="sec-label">Study</div>
   <div class="study-grid">
 
-    <a class="study-card flash" id="card-flash" href="flashcards.html">
-      <div class="sc-icon">🃏</div>
-      <div class="sc-text">
-        <div class="sc-title">Flashcard Review</div>
-        <div class="sc-sub">Spaced repetition · flip to reveal · grade yourself</div>
-      </div>
-      <span class="sc-badge" id="badge-flash">0 due</span>
-    </a>
-
     <a class="study-card lesson" id="card-lesson" href="lessons.html">
       <div class="sc-icon">🎯</div>
       <div class="sc-text">
         <div class="sc-title">Lesson</div>
-        <div class="sc-sub">Multiple choice · fill-in-the-blank · wrong answers feed into flashcards</div>
+        <div class="sc-sub">Multiple choice · flip cards · typing · match pairs · all in one</div>
       </div>
       <span class="sc-badge" id="badge-lesson">Quiz</span>
     </a>
 
-    <a class="study-card match" href="match.html">
-      <div class="sc-icon">🔗</div>
-      <div class="sc-text">
-        <div class="sc-title">Match Pairs</div>
-        <div class="sc-sub">Tap words to match with their translations · due words first</div>
-      </div>
-      <span class="sc-badge">Play</span>
-    </a>
-
-    <a class="study-card weak" id="card-weak" href="flashcards.html?mode=weak">
+    <a class="study-card weak" id="card-weak" href="lessons.html">
       <div class="sc-icon">💪</div>
       <div class="sc-text">
         <div class="sc-title">Weak Words</div>
@@ -415,7 +397,7 @@
     <div class="sec-label">Add Vocabulary</div>
     <div style="display:flex;gap:6px">
       <button class="btn-import" onclick="openExport()">⬇ Export File</button>
-      <button class="btn-import" onclick="openImport()">⬆ Import file</button>
+      <button class="btn-import" onclick="openImport()">⬆ Import File</button>
     </div>
   </div>
   <div class="add-panel">
@@ -674,7 +656,6 @@
     document.getElementById('stat-weak').textContent   = s.weak;
     document.getElementById('stat-streak').textContent = VS.getStreak().current || 0;
 
-    document.getElementById('badge-flash').textContent = s.due + ' due';
     document.getElementById('badge-lesson').textContent =
       s.total >= 4 ? s.total + ' words' : 'Need 4+ words';
     document.getElementById('badge-weak').textContent =
