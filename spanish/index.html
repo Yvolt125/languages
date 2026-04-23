@@ -704,12 +704,15 @@
     };
     const labels = { definition: 'No definition', partOfSpeech: 'No part of speech', examples: 'No examples' };
     const el = document.getElementById('missing-filter-row');
-    el.innerHTML = Object.entries(counts)
+    const chips = Object.entries(counts)
       .filter(([, n]) => n > 0)
       .map(([k, n]) =>
         `<button class="tag-chip${activeMissingFilter === k ? ' active' : ''}"
           onclick="toggleMissingFilter(${JSON.stringify(k)})">${labels[k]} (${n})</button>`
       ).join('');
+    el.innerHTML = chips
+      ? `<span style="font-size:0.75em;color:#95a5a6;align-self:center;white-space:nowrap">Filter missing:</span>${chips}`
+      : '';
   }
 
   function toggleMissingFilter(field) {

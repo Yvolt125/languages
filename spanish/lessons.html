@@ -353,7 +353,7 @@
     const dist = others.slice(0, 3);
 
     const types = ['es-to-en', 'en-to-es', 'type-word', 'flip-card', 'type-card'];
-    if (VS.hasTTS()) types.push('listen-pick', 'listen-type');
+    if (VS.hasTTS() && !word.term.includes(' ')) types.push('listen-pick', 'listen-type');
     if (word.examples && word.examples.length) {
       types.push('example-ctx');
       if (word.examples.some(ex => ex.es && ex.es.split(' ').length >= 3))
