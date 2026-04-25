@@ -198,7 +198,9 @@
       background: white; border-radius: 12px; padding: 12px 14px;
       display: flex; align-items: center; gap: 12px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #e1e8ed;
+      cursor: pointer; transition: box-shadow .15s;
     }
+    .vocab-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.10); }
     .vocab-card.is-weak  { border-left-color: #e67e22; }
     .vocab-card.is-due   { border-left-color: #e67e22; }
     .vocab-card.is-new   { border-left-color: #2980b9; }
@@ -222,12 +224,18 @@
     .wrong-count {
       font-size: 0.7em; color: #e67e22; font-weight: 700;
     }
-    .vocab-actions { display: flex; gap: 4px; }
+    .vocab-actions { display: flex; gap: 4px; align-items: center; }
     .btn-icon-sm {
       background: none; border: none; cursor: pointer; padding: 4px;
       font-size: 1em; opacity: 0.4; transition: opacity .15s; line-height: 1;
     }
     .btn-icon-sm:hover { opacity: 1; }
+    .btn-card-action {
+      background: #f4f6f8; border: 1px solid #dde1e4; border-radius: 6px;
+      cursor: pointer; padding: 4px 8px; font-size: 0.72em; color: #5a6a7a;
+      transition: background .15s, color .15s; white-space: nowrap;
+    }
+    .btn-card-action:hover { background: #e8edf2; color: #2c3e50; }
 
     .empty-state {
       text-align: center; padding: 40px 20px; color: #bdc3c7; font-size: 0.9em; line-height: 1.8;
@@ -888,9 +896,9 @@
         ? `<span class="dup-badge">⚠ duplicate?</span>` : '';
 
       const ttsBtn = VS.hasTTS()
-        ? `<button class="btn-icon-sm" onclick="VS.speak('${esc(w.term)}')" title="Listen">🔊</button>` : '';
+        ? `<button class="btn-icon-sm" onclick="event.stopPropagation();VS.speak('${esc(w.term)}')" title="Listen">🔊</button>` : '';
 
-      return `<div class="${cardClass}">
+      return `<div class="${cardClass}" onclick="openEdit('${w.id}')">
         <div class="vocab-meta">
           <div class="vocab-term">${esc(w.term)}</div>
           <div class="vocab-trans">${esc(w.translation)}</div>
@@ -902,10 +910,9 @@
           <span class="due-pill ${pillClass}">${pill}</span>
           <div class="vocab-actions">
             ${ttsBtn}
-            <button class="btn-icon-sm" id="ex-btn-${w.id}" onclick="addMoreExamples('${w.id}')" title="Add examples">📝</button>
-            <button class="btn-icon-sm" id="dr-btn-${w.id}" onclick="openDerivativesModal('${w.id}')" title="Add derivatives">🔗</button>
-            <button class="btn-icon-sm" onclick="openEdit('${w.id}')" title="Edit">✏️</button>
-            <button class="btn-icon-sm" onclick="removeWord('${w.id}')" title="Delete">🗑</button>
+            <button class="btn-card-action" id="ex-btn-${w.id}" onclick="event.stopPropagation();addMoreExamples('${w.id}')">＋ Examples</button>
+            <button class="btn-card-action" id="dr-btn-${w.id}" onclick="event.stopPropagation();openDerivativesModal('${w.id}')">＋ Derivs</button>
+            <button class="btn-icon-sm" onclick="event.stopPropagation();removeWord('${w.id}')" title="Delete">🗑</button>
           </div>
         </div>
       </div>`;
