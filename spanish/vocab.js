@@ -284,7 +284,7 @@ Return 2–4 items covering FUNDAMENTALLY different meanings only — do not lis
       const pos = (partOfSpeech || '').toLowerCase();
       let guidance = '';
       if (pos.includes('verb'))
-        guidance = 'Return the 6 present-tense conjugations (yo/tú/él/nosotros/vosotros/ellos). If the verb is irregular, also include the 3rd-person preterite. Skip the infinitive itself.';
+        guidance = 'Return the 6 present-tense indicative conjugations (yo/tú/él/nosotros/vosotros/ellos), then the 6 present subjunctive conjugations (yo/tú/él/nosotros/vosotros/ellos). If the verb is irregular, also include the 3rd-person preterite. Skip the infinitive itself.';
       else if (pos.includes('noun'))
         guidance = 'Return the plural form. If the noun has a grammatical gender counterpart (e.g. actor/actriz, niño/niña), include that too.';
       else if (pos.includes('adj'))

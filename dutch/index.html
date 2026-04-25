@@ -365,18 +365,22 @@
     .interp-option .interp-def { font-size: 0.8em; color: #7f8c8d; line-height: 1.4; }
 
     /* ── Derivatives picker ── */
-    .deriv-picker { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+    .deriv-picker { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; max-height: 340px; overflow-y: auto; }
     .deriv-item {
-      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px;
       border-radius: 10px; border: 1.5px solid #e1e8ed; font-size: 0.84em;
       cursor: pointer; transition: border-color .15s, background .15s;
     }
     .deriv-item:hover { border-color: #c0392b; background: #fff8f7; }
-    .deriv-item input[type=checkbox] { cursor: pointer; flex-shrink: 0; width: 16px; height: 16px; }
+    .deriv-item:has(input:checked) { border-color: #c0392b; background: #fff8f7; }
+    .deriv-item input[type=checkbox] { cursor: pointer; flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; }
+    .deriv-info  { flex: 1; min-width: 0; }
+    .deriv-top   { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
     .deriv-term  { font-weight: 700; color: #2c3e50; }
-    .deriv-rel   { font-size: 0.72em; font-weight: 700; text-transform: uppercase;
-                   letter-spacing: .5px; color: #c0392b; margin-left: 4px; }
-    .deriv-trans { color: #7f8c8d; margin-left: auto; }
+    .deriv-trans { color: #7f8c8d; font-size: 0.9em; }
+    .deriv-rel   { display: inline-block; margin-top: 4px; font-size: 0.68em; font-weight: 700;
+                   text-transform: uppercase; letter-spacing: .4px; color: #fff;
+                   background: #c0392b; border-radius: 4px; padding: 1px 5px; }
     .btn-deriv {
       padding: 10px 14px; background: #f0f2f5; color: #2c3e50; border: 1.5px solid #e1e8ed;
       border-radius: 10px; font-size: 0.83em; font-weight: 700; cursor: pointer;
@@ -1696,10 +1700,14 @@
     el._derivs = derivs;
     el.innerHTML = derivs.map((d, i) =>
       `<label class="deriv-item">
-        <input type="checkbox" data-idx="${i}" checked>
-        <span class="deriv-term">${esc(d.term)}</span>
-        <span class="deriv-rel">${esc(d.relationship)}</span>
-        <span class="deriv-trans">${esc(d.translation)}</span>
+        <input type="checkbox" data-idx="${i}">
+        <div class="deriv-info">
+          <div class="deriv-top">
+            <span class="deriv-term">${esc(d.term)}</span>
+            <span class="deriv-trans">${esc(d.translation)}</span>
+          </div>
+          <span class="deriv-rel">${esc(d.relationship)}</span>
+        </div>
       </label>`
     ).join('');
   }

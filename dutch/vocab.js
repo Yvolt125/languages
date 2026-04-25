@@ -284,7 +284,7 @@ Return 2–4 items covering FUNDAMENTALLY different meanings only — do not lis
       const pos = (partOfSpeech || '').toLowerCase();
       let guidance = '';
       if (pos.includes('verb'))
-        guidance = 'Return the key present-tense conjugations (ik/jij/hij/wij/jullie/zij). If irregular, also include strong past tense forms. Skip the infinitive itself.';
+        guidance = 'Return the present-tense conjugations (ik/jij/hij/wij/jullie/zij), then the present subjunctive form (used in formal/subclause contexts, e.g. "hij leve"). If the verb is strong/irregular, also include the strong past tense (hij-form). Skip the infinitive itself.';
       else if (pos.includes('noun'))
         guidance = 'Return the plural form. Include diminutive form if commonly used. Include de/het article in the term field where helpful.';
       else if (pos.includes('adj'))
