@@ -13,6 +13,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; min-height: 100vh; }
 
+    /* ── Offline banner ── */
+    .offline-banner {
+      display: none; background: #e67e22; color: white;
+      text-align: center; padding: 7px 16px; font-size: 0.8em; font-weight: 600;
+    }
+    .offline-banner.visible { display: block; }
+
     /* ── Header ── */
     header {
       background: #1a252f; color: white;
@@ -349,6 +356,34 @@
     .interp-option .interp-pos { font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #c0392b; margin: 2px 0; }
     .interp-option .interp-def { font-size: 0.8em; color: #7f8c8d; line-height: 1.4; }
 
+    /* ── Derivatives picker ── */
+    .deriv-picker { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+    .deriv-item {
+      display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+      border-radius: 10px; border: 1.5px solid #e1e8ed; font-size: 0.84em;
+      cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .deriv-item:hover { border-color: #c0392b; background: #fff8f7; }
+    .deriv-item input[type=checkbox] { cursor: pointer; flex-shrink: 0; width: 16px; height: 16px; }
+    .deriv-term  { font-weight: 700; color: #2c3e50; }
+    .deriv-rel   { font-size: 0.72em; font-weight: 700; text-transform: uppercase;
+                   letter-spacing: .5px; color: #c0392b; margin-left: 4px; }
+    .deriv-trans { color: #7f8c8d; margin-left: auto; }
+    .btn-deriv {
+      padding: 10px 14px; background: #f0f2f5; color: #2c3e50; border: 1.5px solid #e1e8ed;
+      border-radius: 10px; font-size: 0.83em; font-weight: 700; cursor: pointer;
+      white-space: nowrap; transition: background .2s; flex-shrink: 0; height: 40px;
+    }
+    .btn-deriv:hover { background: #e1e8ed; }
+    .btn-deriv:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-add-deriv {
+      width: 100%; padding: 11px; background: #c0392b; color: white; border: none;
+      border-radius: 10px; font-size: 0.88em; font-weight: 700; cursor: pointer;
+      margin-top: 4px; transition: opacity .2s;
+    }
+    .btn-add-deriv:hover { opacity: 0.88; }
+    .btn-add-deriv:disabled { opacity: 0.45; cursor: not-allowed; }
+
     /* ── Definition picker ── */
     .def-picker { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
     .def-option {
@@ -364,6 +399,7 @@
 </head>
 <body>
 
+<div class="offline-banner" id="offline-banner">You're offline — lessons still work</div>
 <header>
   <a class="back" href="../index.html">← Languages</a>
   <h1>Spanish</h1>
@@ -594,9 +630,14 @@
       <textarea id="e-def" rows="2"></textarea>
       <div class="def-picker" id="e-def-picker" style="display:none"></div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
+    <div style="display:flex;gap:8px;margin-bottom:6px">
       <button class="btn-autofill" id="e-btn-autofill" onclick="editAutoFill()" style="flex:1">🔤 Auto-fill</button>
       <button class="btn-gen"      id="e-btn-gen"      onclick="editGenerate()"  style="flex:1">✨ Generate</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <button class="btn-deriv" id="e-btn-deriv" onclick="editDerivatives()" style="width:100%">＋ Derivatives</button>
+      <div class="deriv-picker" id="e-deriv-picker" style="display:none"></div>
+      <button class="btn-add-deriv" id="e-btn-add-deriv" style="display:none" onclick="addSelectedDerivatives()">Add selected as new words</button>
     </div>
     <div class="gen-msg" id="e-gen-msg"></div>
     <div class="interp-picker" id="e-interp-picker" style="display:none"></div>
@@ -620,6 +661,20 @@
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeEdit()">Cancel</button>
       <button class="btn-ok"     onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Derivatives card-button modal -->
+<div class="modal-overlay" id="deriv-modal">
+  <div class="modal wide">
+    <h2>🔗 Derivatives of <span id="dm-term"></span></h2>
+    <p class="modal-sub">Select the forms you want to add as new vocabulary cards. Each will be fully generated with a definition and examples.</p>
+    <div class="gen-msg" id="dm-msg"></div>
+    <div class="deriv-picker" id="dm-picker" style="display:none"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDerivModal()">Cancel</button>
+      <button class="btn-ok" id="dm-btn-add" style="display:none" onclick="addDerivativesFromModal()">Add selected as new words</button>
     </div>
   </div>
 </div>
@@ -652,9 +707,26 @@
   let sortMode = 'recent';
   let activeTagFilter = null;
   let activeMissingFilter = null;
+  let _generating = false;
+
+  /* ── Offline ─────────────────────────── */
+  function updateOfflineUI() {
+    const offline = !navigator.onLine;
+    document.getElementById('offline-banner').classList.toggle('visible', offline);
+    ['btn-gen', 'btn-autofill', 'e-btn-gen', 'e-btn-autofill', 'e-btn-deriv'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.disabled = offline; el.title = offline ? 'Requires internet connection' : ''; }
+    });
+    document.querySelectorAll('.btn-gen-all-ex').forEach(el => {
+      el.disabled = offline;
+    });
+  }
+  window.addEventListener('online',  updateOfflineUI);
+  window.addEventListener('offline', updateOfflineUI);
 
   /* ── Init ────────────────────────────── */
   function init() {
+    updateOfflineUI();
     refreshStats();
     renderTagChips();
     renderMissingChips();
@@ -831,6 +903,8 @@
           <span class="due-pill ${pillClass}">${pill}</span>
           <div class="vocab-actions">
             ${ttsBtn}
+            <button class="btn-icon-sm" id="ex-btn-${w.id}" onclick="addMoreExamples('${w.id}')" title="Add examples">📝</button>
+            <button class="btn-icon-sm" id="dr-btn-${w.id}" onclick="openDerivativesModal('${w.id}')" title="Add derivatives">🔗</button>
             <button class="btn-icon-sm" onclick="openEdit('${w.id}')" title="Edit">✏️</button>
             <button class="btn-icon-sm" onclick="removeWord('${w.id}')" title="Delete">🗑</button>
           </div>
@@ -846,6 +920,24 @@
     renderTagChips();
     renderMissingChips();
     renderList();
+  }
+
+  async function addMoreExamples(id) {
+    const w = VS.getAll().find(x => x.id === id);
+    if (!w) return;
+    if (!w.translation) { alert('Word needs a translation before generating examples.'); return; }
+    const btn = document.getElementById('ex-btn-' + id);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+    try {
+      const exs = await VS.generateExamples(w.term, w.translation, w.partOfSpeech);
+      if (exs.length) {
+        const existing = w.examples || [];
+        VS.update(id, { examples: [...existing, ...exs] });
+        renderMissingChips();
+        renderList();
+      }
+    } catch(e) { alert('⚠️ ' + e.message); }
+    if (btn) { btn.disabled = false; btn.textContent = '📝'; }
   }
 
   /* ── Edit word ───────────────────────── */
@@ -945,15 +1037,22 @@
     btn.disabled = false; btn.textContent = '🔤 Auto-fill';
   }
 
+  function setEditSaveBlocked(blocked) {
+    const saveBtn = document.querySelector('#edit-modal .btn-ok');
+    if (saveBtn) { saveBtn.disabled = blocked; saveBtn.style.opacity = blocked ? '0.45' : ''; }
+  }
+
   async function editGenerate() {
     const term = document.getElementById('e-term').value.trim();
     if (!term) { alert('Fill in the Spanish term first.'); return; }
     const btn = document.getElementById('e-btn-gen');
     btn.disabled = true; btn.textContent = '⏳';
+    setEditSaveBlocked(true);
     setEditMsg('', '');
     try {
       const items = await VS.generateMeanings(term);
       const applyMeaning = async d => {
+        setEditSaveBlocked(true);
         if (d.translation)  document.getElementById('e-trans').value = d.translation;
         if (d.definition)   document.getElementById('e-def').value   = d.definition;
         if (d.partOfSpeech) document.getElementById('e-pos').value   = d.partOfSpeech;
@@ -963,14 +1062,16 @@
           if (exs.length) { editExamples = exs; renderEditExamples(); }
         } catch(_) {}
         setEditMsg('ok', '✅ Done — review and save.');
+        setEditSaveBlocked(false);
       };
       if (items.length > 1) {
         renderInterpPicker('e-interp-picker', items, applyMeaning);
         setEditMsg('ok', '✨ Multiple meanings — pick one below.');
+        setEditSaveBlocked(false);
       } else {
         await applyMeaning(items[0]);
       }
-    } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
+    } catch(e) { setEditMsg('err', '⚠️ ' + e.message); setEditSaveBlocked(false); }
     btn.disabled = false; btn.textContent = '✨ Generate';
   }
 
@@ -982,13 +1083,17 @@
     setEditMsg('ok', '✨ Generating examples…');
     try {
       const exs = await VS.generateExamples(term, trans, pos);
-      if (exs.length) { editExamples = exs; renderEditExamples(); }
+      if (exs.length) { editExamples = [...editExamples, ...exs]; renderEditExamples(); }
       setEditMsg('ok', '✅ Examples added — review and save.');
     } catch(e) { setEditMsg('err', '⚠️ ' + e.message); }
   }
 
   document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) closeEdit();
+  });
+
+  document.getElementById('deriv-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeDerivModal();
   });
 
   /* ── Add form ────────────────────────── */
@@ -1162,15 +1267,23 @@
     el.style.display = 'none'; el.innerHTML = '';
   }
 
+  function setSaveBlocked(blocked) {
+    _generating = blocked;
+    const saveBtn = document.getElementById('btn-save');
+    if (saveBtn) { saveBtn.disabled = blocked; saveBtn.style.opacity = blocked ? '0.45' : ''; }
+  }
+
   async function doGenerate() {
     const term = document.getElementById('f-term').value.trim();
     if (!term) { alert('Type a Spanish word first.'); return; }
     const btn = document.getElementById('btn-gen');
     btn.disabled = true; btn.textContent = '⏳';
+    setSaveBlocked(true);
     setGenMsg('', '');
     try {
       const items = await VS.generateMeanings(term);
       const applyMeaning = async d => {
+        setSaveBlocked(true);
         if (d.translation)  document.getElementById('f-trans').value = d.translation;
         if (d.definition)   document.getElementById('f-def').value   = d.definition;
         if (d.partOfSpeech) document.getElementById('f-pos').value   = d.partOfSpeech;
@@ -1180,14 +1293,16 @@
           if (exs.length) { pendingExamples = exs; renderExamples(); }
         } catch(_) {}
         setGenMsg('ok', '✅ Done — review and save.');
+        setSaveBlocked(false);
       };
       if (items.length > 1) {
         renderInterpPicker('f-interp-picker', items, applyMeaning);
         setGenMsg('ok', '✨ Multiple meanings — pick one below.');
+        setSaveBlocked(false);
       } else {
         await applyMeaning(items[0]);
       }
-    } catch(e) { setGenMsg('err', '⚠️ ' + e.message); }
+    } catch(e) { setGenMsg('err', '⚠️ ' + e.message); setSaveBlocked(false); }
     btn.disabled = false; btn.textContent = '✨ Generate';
   }
 
@@ -1199,7 +1314,7 @@
     setGenMsg('ok', '✨ Generating examples…');
     try {
       const exs = await VS.generateExamples(term, trans, pos);
-      if (exs.length) { pendingExamples = exs; renderExamples(); }
+      if (exs.length) { pendingExamples = [...pendingExamples, ...exs]; renderExamples(); }
       setGenMsg('ok', '✅ Examples added — review and save.');
     } catch(e) { setGenMsg('err', '⚠️ ' + e.message); }
   }
@@ -1543,6 +1658,145 @@
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
   init();
+
+  /* ── Derivatives (edit modal) ────────── */
+  async function editDerivatives() {
+    const term = document.getElementById('e-term').value.trim();
+    const pos  = document.getElementById('e-pos').value.trim();
+    if (!term) { alert('Fill in the Spanish term first.'); return; }
+    const btn = document.getElementById('e-btn-deriv');
+    const picker = document.getElementById('e-deriv-picker');
+    const addBtn = document.getElementById('e-btn-add-deriv');
+    btn.disabled = true; btn.textContent = '⏳ Loading…';
+    picker.style.display = 'none'; picker.innerHTML = ''; addBtn.style.display = 'none';
+    try {
+      const derivs = await VS.generateDerivatives(term, pos);
+      if (!derivs.length) {
+        btn.textContent = '＋ Derivatives';
+        btn.disabled = false;
+        alert('No useful derivatives found for this word.');
+        return;
+      }
+      renderDerivPicker('e-deriv-picker', derivs);
+      picker.style.display = 'flex';
+      addBtn.style.display = '';
+    } catch(e) { alert('⚠️ ' + e.message); }
+    btn.textContent = '＋ Derivatives';
+    btn.disabled = false;
+  }
+
+  function renderDerivPicker(pickerId, derivs) {
+    const el = document.getElementById(pickerId);
+    el._derivs = derivs;
+    el.innerHTML = derivs.map((d, i) =>
+      `<label class="deriv-item">
+        <input type="checkbox" data-idx="${i}" checked>
+        <span class="deriv-term">${esc(d.term)}</span>
+        <span class="deriv-rel">${esc(d.relationship)}</span>
+        <span class="deriv-trans">${esc(d.translation)}</span>
+      </label>`
+    ).join('');
+  }
+
+  async function addSelectedDerivatives() {
+    const picker = document.getElementById('e-deriv-picker');
+    const addBtn = document.getElementById('e-btn-add-deriv');
+    const derivs = picker._derivs || [];
+    const checked = [...picker.querySelectorAll('input[type=checkbox]:checked')]
+      .map(cb => derivs[parseInt(cb.dataset.idx)]).filter(Boolean);
+    if (!checked.length) { alert('Select at least one derivative.'); return; }
+    addBtn.disabled = true; addBtn.textContent = `Adding 0/${checked.length}…`;
+    let done = 0;
+    for (const d of checked) {
+      addBtn.textContent = `Adding ${done + 1}/${checked.length}…`;
+      try {
+        const meanings = await VS.generateMeanings(d.term);
+        const m = meanings[0] || d;
+        const exs = await VS.generateExamples(d.term, m.translation || d.translation, m.partOfSpeech || d.partOfSpeech);
+        VS.add({
+          term:         d.term,
+          translation:  m.translation  || d.translation,
+          partOfSpeech: m.partOfSpeech || d.partOfSpeech,
+          definition:   m.definition   || '',
+          examples:     exs
+        });
+      } catch(_) {
+        VS.add({ term: d.term, translation: d.translation, partOfSpeech: d.partOfSpeech, definition: '', examples: [] });
+      }
+      done++;
+    }
+    addBtn.disabled = false; addBtn.textContent = 'Add selected as new words';
+    picker.style.display = 'none'; picker.innerHTML = ''; addBtn.style.display = 'none';
+    refreshStats(); renderTagChips(); renderMissingChips(); renderList();
+    alert(`Added ${done} derivative word${done !== 1 ? 's' : ''} to your vocabulary.`);
+  }
+
+  /* ── Derivatives (vocab card quick modal) ── */
+  let _derivModalId = null;
+
+  function openDerivativesModal(id) {
+    _derivModalId = id;
+    const w = VS.getAll().find(x => x.id === id);
+    if (!w) return;
+    document.getElementById('dm-term').textContent = w.term;
+    document.getElementById('dm-picker').style.display = 'none';
+    document.getElementById('dm-picker').innerHTML = '';
+    document.getElementById('dm-btn-add').style.display = 'none';
+    document.getElementById('dm-msg').textContent = '';
+    document.getElementById('deriv-modal').classList.add('open');
+    doDerivativesModal(w);
+  }
+
+  async function doDerivativesModal(w) {
+    const msg = document.getElementById('dm-msg');
+    msg.textContent = '✨ Generating…';
+    try {
+      const derivs = await VS.generateDerivatives(w.term, w.partOfSpeech);
+      if (!derivs.length) { msg.textContent = 'No useful derivatives found.'; return; }
+      msg.textContent = '';
+      renderDerivPicker('dm-picker', derivs);
+      document.getElementById('dm-picker').style.display = 'flex';
+      document.getElementById('dm-btn-add').style.display = '';
+    } catch(e) { msg.textContent = '⚠️ ' + e.message; }
+  }
+
+  async function addDerivativesFromModal() {
+    const picker = document.getElementById('dm-picker');
+    const addBtn = document.getElementById('dm-btn-add');
+    const derivs = picker._derivs || [];
+    const checked = [...picker.querySelectorAll('input[type=checkbox]:checked')]
+      .map(cb => derivs[parseInt(cb.dataset.idx)]).filter(Boolean);
+    if (!checked.length) { alert('Select at least one derivative.'); return; }
+    addBtn.disabled = true; addBtn.textContent = `Adding 0/${checked.length}…`;
+    let done = 0;
+    for (const d of checked) {
+      addBtn.textContent = `Adding ${done + 1}/${checked.length}…`;
+      try {
+        const meanings = await VS.generateMeanings(d.term);
+        const m = meanings[0] || d;
+        const exs = await VS.generateExamples(d.term, m.translation || d.translation, m.partOfSpeech || d.partOfSpeech);
+        VS.add({
+          term:         d.term,
+          translation:  m.translation  || d.translation,
+          partOfSpeech: m.partOfSpeech || d.partOfSpeech,
+          definition:   m.definition   || '',
+          examples:     exs
+        });
+      } catch(_) {
+        VS.add({ term: d.term, translation: d.translation, partOfSpeech: d.partOfSpeech, definition: '', examples: [] });
+      }
+      done++;
+    }
+    addBtn.disabled = false; addBtn.textContent = 'Add selected as new words';
+    document.getElementById('deriv-modal').classList.remove('open');
+    refreshStats(); renderTagChips(); renderMissingChips(); renderList();
+    alert(`Added ${done} derivative word${done !== 1 ? 's' : ''} to your vocabulary.`);
+  }
+
+  function closeDerivModal() {
+    document.getElementById('deriv-modal').classList.remove('open');
+    _derivModalId = null;
+  }
 </script>
 </body>
 </html>

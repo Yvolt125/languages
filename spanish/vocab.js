@@ -277,6 +277,30 @@ Return 2–4 items covering FUNDAMENTALLY different meanings only — do not lis
     // Legacy alias
     async generate(term) {
       return this.generateMeanings(term);
+    },
+
+    // Phase 1 for derivatives: return list of inflected/conjugated forms
+    async generateDerivatives(term, partOfSpeech) {
+      const pos = (partOfSpeech || '').toLowerCase();
+      let guidance = '';
+      if (pos.includes('verb'))
+        guidance = 'Return the 6 present-tense conjugations (yo/tú/él/nosotros/vosotros/ellos). If the verb is irregular, also include the 3rd-person preterite. Skip the infinitive itself.';
+      else if (pos.includes('noun'))
+        guidance = 'Return the plural form. If the noun has a grammatical gender counterpart (e.g. actor/actriz, niño/niña), include that too.';
+      else if (pos.includes('adj'))
+        guidance = 'Return all 4 gender/number forms: masculine singular, feminine singular, masculine plural, feminine plural. Skip any that are identical to the base word.';
+      else
+        guidance = 'Return the most useful inflected or related forms of the word that a language learner would benefit from knowing separately.';
+
+      const PROMPT =
+`You are a Spanish language expert. For the Spanish word "${term}" (${partOfSpeech || 'unknown POS'}):
+${guidance}
+Return ONLY a JSON array — no other text:
+[{ "term": "Spanish form", "translation": "English meaning", "partOfSpeech": "pos", "relationship": "short label like '1sg present' or 'plural'" }]
+Do not include "${term}" itself. Return an empty array [] if no useful derivatives exist.`;
+      const text = await this._aiCall(PROMPT, 500);
+      const data = this._parseJSON(text);
+      return Array.isArray(data) ? data : [];
     }
   };
 

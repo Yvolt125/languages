@@ -21,6 +21,9 @@
     .back:hover { color: white; }
     .hearts { font-size: 1.05em; letter-spacing: 2px; min-width: 60px; text-align: right; }
 
+    .offline-banner { display: none; background: #e67e22; color: white;
+      text-align: center; padding: 6px 16px; font-size: 0.78em; font-weight: 600; flex-shrink: 0; }
+    .offline-banner.visible { display: block; }
     .progress-bar { height: 5px; background: #2c3e50; flex-shrink: 0; }
     .progress-fill { height: 100%; background: #2980b9; transition: width .3s; }
 
@@ -198,6 +201,7 @@
   <a class="back" href="index.html">← Dutch</a>
   <span class="hearts" id="hearts">❤️❤️❤️</span>
 </header>
+<div class="offline-banner" id="offline-banner">You're offline — lesson progress will still be saved</div>
 <div class="progress-bar">
   <div class="progress-fill" id="prog-fill" style="width:0%"></div>
 </div>
@@ -290,6 +294,48 @@
 
 <script src="vocab.js"></script>
 <script>
+  /* ── Sound effects ───────────────────────── */
+  const SFX = (() => {
+    let _ctx = null;
+    function ctx() {
+      if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+      return _ctx;
+    }
+    function tone(freq, type, duration, gainVal, startTime, ac) {
+      const g = ac.createGain();
+      const o = ac.createOscillator();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, startTime);
+      g.gain.setValueAtTime(gainVal, startTime);
+      g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      o.connect(g); g.connect(ac.destination);
+      o.start(startTime); o.stop(startTime + duration);
+    }
+    return {
+      correct() {
+        try {
+          const ac = ctx(), t = ac.currentTime;
+          tone(600, 'sine', 0.12, 0.3, t,        ac);
+          tone(900, 'sine', 0.18, 0.3, t + 0.10, ac);
+        } catch(_) {}
+      },
+      wrong() {
+        try {
+          const ac = ctx(), t = ac.currentTime;
+          tone(220, 'sawtooth', 0.22, 0.25, t, ac);
+        } catch(_) {}
+      },
+      finish() {
+        try {
+          const ac = ctx(), t = ac.currentTime;
+          [523, 659, 784, 1047].forEach((f, i) =>
+            tone(f, 'sine', 0.18, 0.28, t + i * 0.14, ac)
+          );
+        } catch(_) {}
+      }
+    };
+  })();
+
   const SESSION_SIZE = 10;
   let questions = [], qIndex = 0, hearts = 3, correctCount = 0, wrongCount = 0;
   let currentQ = null, answered = false, currentPromptEs = '';
@@ -366,75 +412,81 @@
     if (type === 'es-to-en') {
       return {
         word, type,
-        label:   'What does this mean?',
-        prompt:  word.term,
-        lang:    'es',
-        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
-        options: shuffle([word.translation, ...dist.map(w => w.translation)]),
-        answer:  word.translation,
-        explain: word.definition || '"' + word.term + '" means "' + word.translation + '"'
+        label:        'What does this mean?',
+        prompt:       word.term,
+        lang:         'nl',
+        hint:         word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        options:      shuffle([word.translation, ...dist.map(w => w.translation)]),
+        answer:       word.translation,
+        speakOnWrong: false,
+        explain:      word.definition || '"' + word.term + '" means "' + word.translation + '"'
       };
     }
     if (type === 'en-to-es') {
       return {
         word, type,
-        label:   'How do you say this in Dutch?',
-        prompt:  word.translation,
-        lang:    'en',
-        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
-        options: shuffle([word.term, ...dist.map(w => w.term)]),
-        answer:  word.term,
-        explain: word.definition || '"' + word.translation + '" → "' + word.term + '"'
+        label:        'How do you say this in Dutch?',
+        prompt:       word.translation,
+        lang:         'en',
+        hint:         word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        options:      shuffle([word.term, ...dist.map(w => w.term)]),
+        answer:       word.term,
+        speakOnWrong: true,
+        explain:      word.definition || '"' + word.translation + '" → "' + word.term + '"'
       };
     }
     if (type === 'type-word') {
       return {
         word, type,
-        label:   'Type the Dutch word',
-        prompt:  word.translation,
-        lang:    'en',
-        hint:    word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
-        answer:  word.term,
-        explain: '"' + word.translation + '" → "' + word.term + '"'
+        label:        'Type the Dutch word',
+        prompt:       word.translation,
+        lang:         'en',
+        hint:         word.partOfSpeech ? '(' + word.partOfSpeech + ')' : '',
+        answer:       word.term,
+        speakOnWrong: true,
+        explain:      '"' + word.translation + '" → "' + word.term + '"'
       };
     }
     if (type === 'listen-pick') {
       return {
         word, type,
-        label:   'What do you hear?',
-        prompt:  '',
-        audio:   word.term,
-        lang:    'es',
-        hint:    '',
-        options: shuffle([word.translation, ...dist.map(w => w.translation)]),
-        answer:  word.translation,
-        explain: '"' + word.term + '" means "' + word.translation + '"'
+        label:        'What do you hear?',
+        prompt:       '',
+        audio:        word.term,
+        lang:         'nl',
+        hint:         '',
+        options:      shuffle([word.translation, ...dist.map(w => w.translation)]),
+        answer:       word.translation,
+        speakOnWrong: false,
+        explain:      '"' + word.term + '" means "' + word.translation + '"'
       };
     }
     if (type === 'listen-type') {
       return {
         word, type,
-        label:   'Type what you hear',
-        prompt:  '',
-        audio:   word.term,
-        lang:    'es',
-        hint:    '',
-        answer:  word.term,
-        explain: '"' + word.term + '" means "' + word.translation + '"'
+        label:        'Type what you hear',
+        prompt:       '',
+        audio:        word.term,
+        lang:         'nl',
+        hint:         '',
+        answer:       word.term,
+        speakOnWrong: true,
+        explain:      '"' + word.term + '" means "' + word.translation + '"'
       };
     }
     if (type === 'example-ctx') {
       const ex = word.examples[Math.floor(Math.random() * word.examples.length)];
       return {
         word, type,
-        label:    'What does the highlighted word mean?',
-        prompt:   ex.es,
-        boldTerm: word.term,
-        lang:     'es',
-        hint:     '',
-        options:  shuffle([word.translation, ...dist.map(w => w.translation)]),
-        answer:   word.translation,
-        explain:  word.definition || '"' + word.term + '" means "' + word.translation + '"'
+        label:        'What does the highlighted word mean?',
+        prompt:       ex.es,
+        boldTerm:     word.term,
+        lang:         'nl',
+        hint:         '',
+        options:      shuffle([word.translation, ...dist.map(w => w.translation)]),
+        answer:       word.translation,
+        speakOnWrong: false,
+        explain:      word.definition || '"' + word.term + '" means "' + word.translation + '"'
       };
     }
     if (type === 'sentence-scramble') {
@@ -448,6 +500,7 @@
         hint:          '',
         scrambleWords: shuffle(ex.es.split(' ')),
         answer:        ex.es,
+        speakOnWrong:  true,
         explain:       'Full sentence: "' + ex.es + '"'
       };
     }
@@ -457,13 +510,14 @@
       const blanked = ex.es.replace(new RegExp(escRe(word.term), 'gi'), '______');
       return {
         word, type,
-        label:   'Fill in the blank',
-        prompt:  blanked,
-        lang:    'es',
-        hint:    ex.en || '',
-        options: shuffle([word.term, ...dist.map(w => w.term)]),
-        answer:  word.term,
-        explain: 'Full sentence: "' + ex.es + '"'
+        label:        'Fill in the blank',
+        prompt:       blanked,
+        lang:         'nl',
+        hint:         ex.en || '',
+        options:      shuffle([word.term, ...dist.map(w => w.term)]),
+        answer:       word.term,
+        speakOnWrong: true,
+        explain:      'Full sentence: "' + ex.es + '"'
       };
     }
     if (type === 'flip-card') {
@@ -566,11 +620,13 @@
 
     if (isRight) {
       correctCount++;
+      SFX.correct();
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++;
       hearts--;
       updateHearts();
+      SFX.wrong();
       // Track for end-of-lesson summary
       if (!wrongWords.find(w => w.id === currentQ.word.id)) {
         wrongWords.push(currentQ.word);
@@ -579,7 +635,7 @@
         '✗ Incorrect — correct answer: "' + currentQ.answer + '"',
         currentQ.explain
       );
-      if (VS.hasTTS()) VS.speak(currentQ.answer);
+      if (VS.hasTTS() && currentQ.speakOnWrong) VS.speak(currentQ.answer);
     }
 
     document.getElementById('btn-continue').classList.add('visible');
@@ -626,6 +682,7 @@
 
     VS.recordStudyDay();
     showScreen('screen-finish');
+    setTimeout(() => SFX.finish(), 300);
   }
 
   /* ── Helpers ─────────────────────────── */
@@ -652,11 +709,13 @@
 
     if (isRight) {
       correctCount++;
+      SFX.correct();
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++;
       hearts--;
       updateHearts();
+      SFX.wrong();
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
       if (VS.hasTTS()) VS.speak(correct);
@@ -710,11 +769,13 @@
 
     if (isRight) {
       correctCount++;
+      SFX.correct();
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++;
       hearts--;
       updateHearts();
+      SFX.wrong();
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ Correct order: "' + currentQ.answer + '"', currentQ.explain);
     }
@@ -783,11 +844,13 @@
       lBtn.classList.remove('selected'); rBtn.classList.remove('selected');
       lBtn.classList.add('correct');     rBtn.classList.add('correct');
       lBtn.disabled = true;              rBtn.disabled = true;
+      SFX.correct();
       VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, true);
       mpMatched++;
       if (mpMatched === mpWords.length) setTimeout(() => nextQuestion(), 700);
     } else {
       wrongCount++; hearts--; updateHearts();
+      SFX.wrong();
       if (!wrongWords.find(w => w.id === mpWords[mpLeftOrder[ti]].id))
         wrongWords.push(mpWords[mpLeftOrder[ti]]);
       VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, false);
@@ -851,9 +914,11 @@
     VS.trackLessonResult(currentQ.word.id, isCorrect);
     if (isCorrect) {
       correctCount++;
+      SFX.correct();
       showFeedback(true, '✓ Marked correct', currentQ.word.translation);
     } else {
       wrongCount++; hearts--; updateHearts();
+      SFX.wrong();
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ Marked wrong', '"' + currentQ.word.term + '" = "' + currentQ.word.translation + '"');
     }
@@ -879,9 +944,11 @@
     VS.trackLessonResult(currentQ.word.id, isRight);
     if (isRight) {
       correctCount++;
+      SFX.correct();
       showFeedback(true, '✓ Correct!', currentQ.explain);
     } else {
       wrongCount++; hearts--; updateHearts();
+      SFX.wrong();
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
     }
@@ -917,7 +984,14 @@
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  function updateOfflineUI() {
+    document.getElementById('offline-banner').classList.toggle('visible', !navigator.onLine);
+  }
+  window.addEventListener('online',  updateOfflineUI);
+  window.addEventListener('offline', updateOfflineUI);
+
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+  updateOfflineUI();
   initStart();
 </script>
 </body>

@@ -277,6 +277,30 @@ Return 2–4 items covering FUNDAMENTALLY different meanings only — do not lis
     // Legacy alias
     async generate(term) {
       return this.generateMeanings(term);
+    },
+
+    // Phase 1 for derivatives: return list of inflected/conjugated forms
+    async generateDerivatives(term, partOfSpeech) {
+      const pos = (partOfSpeech || '').toLowerCase();
+      let guidance = '';
+      if (pos.includes('verb'))
+        guidance = 'Return the key present-tense conjugations (ik/jij/hij/wij/jullie/zij). If irregular, also include strong past tense forms. Skip the infinitive itself.';
+      else if (pos.includes('noun'))
+        guidance = 'Return the plural form. Include diminutive form if commonly used. Include de/het article in the term field where helpful.';
+      else if (pos.includes('adj'))
+        guidance = 'Return the inflected adjective form (with -e ending) and any comparative/superlative if commonly used. Skip forms identical to the base word.';
+      else
+        guidance = 'Return the most useful inflected or related forms of the word that a Dutch language learner would benefit from knowing separately.';
+
+      const PROMPT =
+`You are a Dutch language expert. For the Dutch word "${term}" (${partOfSpeech || 'unknown POS'}):
+${guidance}
+Return ONLY a JSON array — no other text:
+[{ "term": "Dutch form", "translation": "English meaning", "partOfSpeech": "pos", "relationship": "short label like '1sg present' or 'plural'" }]
+Do not include "${term}" itself. Return an empty array [] if no useful derivatives exist.`;
+      const text = await this._aiCall(PROMPT, 500);
+      const data = this._parseJSON(text);
+      return Array.isArray(data) ? data : [];
     }
   };
 
