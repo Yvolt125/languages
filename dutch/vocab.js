@@ -162,6 +162,14 @@
       localStorage.setItem(SETTINGS_KEY,
         JSON.stringify({ ...this.getSettings(), ...patch }));
     },
+    getSharedSettings() {
+      try { return JSON.parse(localStorage.getItem('accento_shared') || '{}'); }
+      catch(e) { return {}; }
+    },
+    saveSharedSettings(patch) {
+      localStorage.setItem('accento_shared',
+        JSON.stringify({ ...this.getSharedSettings(), ...patch }));
+    },
 
     /* ── Streak ───────────────────────────────────── */
     getStreak() {
@@ -200,13 +208,85 @@
     },
 
     /* ── TTS ──────────────────────────────────────── */
-    hasTTS() { return 'speechSynthesis' in window; },
+    hasTTS() {
+      return 'speechSynthesis' in window || !!this.getSharedSettings().openaiTtsKey;
+    },
+
+    _currentAudio: null,
+
+    _stopCurrent() {
+      if (this._currentAudio) { this._currentAudio.pause(); this._currentAudio = null; }
+      if ('speechSynthesis' in window) speechSynthesis.cancel();
+    },
+
+    _ttsKey(text, lang) {
+      return `https://tts.accento/${lang}/${encodeURIComponent(text)}`;
+    },
+
+    async _ttsFromCache(key) {
+      try {
+        const cache = await caches.open('accento-audio-v1');
+        const r = await cache.match(key);
+        return r ? URL.createObjectURL(await r.blob()) : null;
+      } catch { return null; }
+    },
+
+    async _ttsStore(key, buf) {
+      try {
+        const cache = await caches.open('accento-audio-v1');
+        await cache.put(key, new Response(buf, { headers: { 'Content-Type': 'audio/mpeg' } }));
+      } catch {}
+    },
+
     speak(text, lang) {
-      if (!this.hasTTS()) return;
+      this._stopCurrent();
+      const ss = this.getSharedSettings();
+      const effectiveLang = lang || 'nl-NL';
+      if (ss.openaiTtsKey) {
+        this._speakOpenAI(text, effectiveLang, ss.openaiTtsKey, ss.ttsVoice || 'nova');
+      } else {
+        this._speakBrowser(text, effectiveLang);
+      }
+    },
+
+    async _speakOpenAI(text, lang, apiKey, voice) {
+      const cacheKey = this._ttsKey(text, lang);
+      const cachedUrl = await this._ttsFromCache(cacheKey);
+      if (cachedUrl) {
+        const audio = new Audio(cachedUrl);
+        this._currentAudio = audio;
+        audio.play().catch(() => {});
+        audio.onended = () => URL.revokeObjectURL(cachedUrl);
+        return;
+      }
+      if (!navigator.onLine) { this._speakBrowser(text, lang); return; }
+      try {
+        const resp = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({ model: 'tts-1', input: text, voice })
+        });
+        if (!resp.ok) throw new Error(`TTS ${resp.status}`);
+        const buf = await resp.arrayBuffer();
+        await this._ttsStore(cacheKey, buf);
+        const url = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }));
+        const audio = new Audio(url);
+        this._currentAudio = audio;
+        audio.play().catch(() => {});
+        audio.onended = () => URL.revokeObjectURL(url);
+      } catch {
+        this._speakBrowser(text, lang);
+      }
+    },
+
+    _speakBrowser(text, lang) {
+      if (!('speechSynthesis' in window)) return;
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang || 'nl-NL';
+      u.lang = lang;
       u.rate = 0.85;
-      speechSynthesis.cancel();
       speechSynthesis.speak(u);
     },
 

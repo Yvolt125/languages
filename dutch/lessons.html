@@ -576,7 +576,7 @@
     if (qIndex >= questions.length || hearts <= 0) { showFinish(); return; }
     currentQ = questions[qIndex];
     answered = false;
-    currentPromptEs = currentQ.audio || (currentQ.lang === 'es' ? currentQ.prompt : '');
+    currentPromptEs = currentQ.audio || (currentQ.lang !== 'en' ? currentQ.prompt : '');
 
     document.getElementById('q-label').textContent     = currentQ.label;
     document.getElementById('prompt-hint').textContent = currentQ.hint || '';
@@ -596,7 +596,7 @@
     pw.classList.toggle('is-sentence', isSentencePrompt);
 
     const ttsBtn = document.getElementById('btn-tts');
-    ttsBtn.style.display = (VS.hasTTS() && (currentQ.audio || currentQ.lang === 'es')) ? '' : 'none';
+    ttsBtn.style.display = (VS.hasTTS() && (currentQ.audio || currentQ.lang !== 'en')) ? '' : 'none';
 
     const isType     = currentQ.type === 'type-word'       || currentQ.type === 'listen-type';
     const isScramble = currentQ.type === 'sentence-scramble';
