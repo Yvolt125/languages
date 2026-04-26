@@ -29,7 +29,7 @@
     header p  { font-size: 0.78em; opacity: 0.55; margin-top: 3px; }
     .back {
       position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-      color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em;
+      color: rgba(255,255,255,0.7); text-decoration: none; font-size: 1.4em;
     }
     .back:hover { color: white; }
     .btn-settings {
@@ -196,7 +196,7 @@
     .vocab-list { display: flex; flex-direction: column; gap: 8px; }
     .vocab-card {
       background: white; border-radius: 12px; padding: 12px 14px;
-      display: flex; align-items: center; gap: 12px;
+      display: flex; flex-direction: column;
       box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-left: 4px solid #e1e8ed;
       cursor: pointer; transition: box-shadow .15s;
     }
@@ -206,12 +206,13 @@
     .vocab-card.is-new   { border-left-color: #2980b9; }
     .vocab-card.is-ok    { border-left-color: #27ae60; }
 
-    .vocab-meta { flex: 1; min-width: 0; }
+    .vocab-main  { display: flex; align-items: flex-start; gap: 12px; }
+    .vocab-meta  { flex: 1; min-width: 0; }
     .vocab-term  { font-weight: 700; color: #2c3e50; font-size: 0.93em; }
     .vocab-trans { font-size: 0.8em; color: #7f8c8d; }
     .vocab-pos   { font-size: 0.7em; color: #bdc3c7; text-transform: uppercase; letter-spacing: .5px; }
 
-    .vocab-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .vocab-badges { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .due-pill {
       font-size: 0.68em; font-weight: 700; padding: 3px 8px;
       border-radius: 10px; white-space: nowrap;
@@ -221,10 +222,11 @@
     .pill-ok     { background: #eafaf1; color: #27ae60; }
     .pill-weak   { background: #fef5e7; color: #e67e22; }
 
-    .wrong-count {
-      font-size: 0.7em; color: #e67e22; font-weight: 700;
+    .wrong-count { font-size: 0.7em; color: #e67e22; font-weight: 700; }
+    .vocab-actions {
+      display: flex; gap: 6px; align-items: center;
+      padding-top: 8px; border-top: 1px solid #f0f2f5; margin-top: 8px;
     }
-    .vocab-actions { display: flex; gap: 4px; align-items: center; }
     .btn-icon-sm {
       background: none; border: none; cursor: pointer; padding: 4px;
       font-size: 1em; opacity: 0.4; transition: opacity .15s; line-height: 1;
@@ -413,7 +415,7 @@
 
 <div class="offline-banner" id="offline-banner">You're offline — lessons still work</div>
 <header>
-  <a class="back" href="../index.html">← Languages</a>
+  <a class="back" href="../index.html">←</a>
   <h1>Spanish</h1>
   <p>Vocabulary · Flashcards · Lessons</p>
   <button class="btn-settings" onclick="openSettings()" title="Settings">⚙️</button>
@@ -809,28 +811,50 @@
           onclick="toggleMissingFilter(${JSON.stringify(k)})">${labels[k]} (${n})</button>`
       ).join('');
     const genBtn = counts.examples > 0
-      ? `<button class="btn-gen-all-ex" onclick="genAllExamples()">✨ Generate all missing examples</button>`
+      ? `<button class="btn-gen-all-ex" onclick="fillAllMissing()">✨ Fill all missing fields</button>`
       : '';
     el.innerHTML = chips
       ? `<span style="font-size:0.75em;color:#95a5a6;align-self:center;white-space:nowrap">Filter missing:</span>${chips}${genBtn}`
       : '';
   }
 
-  async function genAllExamples() {
-    const words = VS.getAll().filter(w => !(w.examples && w.examples.length));
+  async function fillAllMissing() {
+    const words = VS.getAll().filter(w =>
+      !w.translation || !w.definition || !w.partOfSpeech ||
+      !(w.examples && w.examples.length)
+    );
     if (!words.length) return;
-    if (!confirm(`Generate examples for ${words.length} word${words.length !== 1 ? 's' : ''} with no examples? This calls the AI API once per word.`)) return;
+    if (!confirm(`Fill missing fields for ${words.length} word${words.length !== 1 ? 's' : ''}? This calls the AI API once per word.`)) return;
     const btn = document.querySelector('.btn-gen-all-ex');
-    if (btn) { btn.disabled = true; btn.textContent = `✨ Generating… (0/${words.length})`; }
+    if (btn) { btn.disabled = true; btn.textContent = `✨ Filling… (0/${words.length})`; }
     let done = 0;
     for (const w of words) {
-      if (btn) btn.textContent = `✨ Generating… (${done + 1}/${words.length})`;
+      if (btn) btn.textContent = `✨ Filling… (${done + 1}/${words.length})`;
       try {
-        const exs = await VS.generateExamples(w.term, w.translation, w.partOfSpeech);
-        if (exs.length) VS.update(w.id, { examples: exs });
+        let { translation, definition, partOfSpeech } = w;
+        const needsMeanings = !translation || !definition || !partOfSpeech;
+        if (needsMeanings) {
+          const items = await VS.generateMeanings(w.term);
+          if (items && items[0]) {
+            const m = items[0];
+            translation  = translation  || m.translation;
+            definition   = definition   || m.definition;
+            partOfSpeech = partOfSpeech || m.partOfSpeech;
+            const patch = {};
+            if (!w.translation  && translation)  patch.translation  = translation;
+            if (!w.definition   && definition)   patch.definition   = definition;
+            if (!w.partOfSpeech && partOfSpeech) patch.partOfSpeech = partOfSpeech;
+            if (Object.keys(patch).length) VS.update(w.id, patch);
+          }
+        }
+        if (!(w.examples && w.examples.length) && translation) {
+          const exs = await VS.generateExamples(w.term, translation, partOfSpeech);
+          if (exs.length) VS.update(w.id, { examples: exs });
+        }
       } catch(_) {}
       done++;
     }
+    if (btn) { btn.disabled = false; btn.textContent = '✨ Fill all missing fields'; }
     renderMissingChips();
     renderList();
   }
@@ -904,21 +928,23 @@
         ? `<button class="btn-icon-sm" onclick="event.stopPropagation();VS.speak('${esc(w.term)}')" title="Listen">🔊</button>` : '';
 
       return `<div class="${cardClass}" onclick="openEdit('${w.id}')">
-        <div class="vocab-meta">
-          <div class="vocab-term">${esc(w.term)}</div>
-          <div class="vocab-trans">${esc(w.translation)}</div>
-          ${w.partOfSpeech ? `<div class="vocab-pos">${esc(w.partOfSpeech)}</div>` : ''}
-        </div>
-        <div class="vocab-right">
-          ${dupBadge}
-          ${wrongBadge}
-          <span class="due-pill ${pillClass}">${pill}</span>
-          <div class="vocab-actions">
-            ${ttsBtn}
-            <button class="btn-card-action" id="ex-btn-${w.id}" onclick="event.stopPropagation();addMoreExamples('${w.id}')">＋ Examples</button>
-            <button class="btn-card-action" id="dr-btn-${w.id}" onclick="event.stopPropagation();openDerivativesModal('${w.id}')">＋ Derivs</button>
-            <button class="btn-icon-sm" onclick="event.stopPropagation();removeWord('${w.id}')" title="Delete">🗑</button>
+        <div class="vocab-main">
+          <div class="vocab-meta">
+            <div class="vocab-term">${esc(w.term)}</div>
+            ${w.translation ? `<div class="vocab-trans">${esc(w.translation)}</div>` : ''}
+            ${w.partOfSpeech ? `<div class="vocab-pos">${esc(w.partOfSpeech)}</div>` : ''}
           </div>
+          <div class="vocab-badges">
+            ${dupBadge}
+            ${wrongBadge}
+            <span class="due-pill ${pillClass}">${pill}</span>
+          </div>
+        </div>
+        <div class="vocab-actions">
+          ${ttsBtn}
+          <button class="btn-card-action" id="ex-btn-${w.id}" onclick="event.stopPropagation();addMoreExamples('${w.id}')">＋ Examples</button>
+          <button class="btn-card-action" id="dr-btn-${w.id}" onclick="event.stopPropagation();openDerivativesModal('${w.id}')">＋ Derivs</button>
+          <button class="btn-icon-sm" onclick="event.stopPropagation();removeWord('${w.id}')" title="Delete">🗑</button>
         </div>
       </div>`;
     }).join('');
@@ -1141,8 +1167,8 @@
   function saveWord() {
     const term  = document.getElementById('f-term').value.trim();
     const trans = document.getElementById('f-trans').value.trim();
-    if (!term || !trans) {
-      alert('Please fill in the Spanish term and English translation.');
+    if (!term) {
+      alert('Please fill in the word or phrase.');
       return;
     }
     const userTags = document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
@@ -1238,6 +1264,7 @@
     if (!term) { alert('Type a Spanish word first.'); return; }
     const btn = document.getElementById('btn-autofill');
     btn.disabled = true; btn.textContent = '⏳';
+    setSaveBlocked(true);
     setGenMsg('', '');
     try {
       const data = await VS.autoFill(term);
@@ -1252,6 +1279,7 @@
       setGenMsg('err', '⚠️ ' + e.message);
     }
     btn.disabled = false; btn.textContent = '🔤 Auto-fill';
+    setSaveBlocked(false);
   }
 
   /* ── AI Generate ─────────────────────── */
@@ -1322,12 +1350,14 @@
     const trans = document.getElementById('f-trans').value.trim();
     const pos   = document.getElementById('f-pos').value.trim();
     if (!term || !trans) { alert('Fill in the Spanish term and translation first.'); return; }
+    setSaveBlocked(true);
     setGenMsg('ok', '✨ Generating examples…');
     try {
       const exs = await VS.generateExamples(term, trans, pos);
       if (exs.length) { pendingExamples = [...pendingExamples, ...exs]; renderExamples(); }
       setGenMsg('ok', '✅ Examples added — review and save.');
     } catch(e) { setGenMsg('err', '⚠️ ' + e.message); }
+    setSaveBlocked(false);
   }
 
   function setGenMsg(type, msg) {
