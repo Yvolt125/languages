@@ -98,6 +98,12 @@
     .flash  .sc-badge { background: #fdedec; color: #c0392b; }
     .lesson .sc-badge { background: #eaf4fb; color: #2980b9; }
     .weak   .sc-badge { background: #fef5e7; color: #e67e22; }
+    .daily-progress { font-size: 0.78em; color: #7f8c8d; margin-top: 4px; letter-spacing: 1px; }
+    .btn-drill-weak {
+      display: inline-block; margin-top: 6px; padding: 4px 10px;
+      background: #e67e22; color: white; border-radius: 8px;
+      font-size: 0.72em; font-weight: 700; text-decoration: none;
+    }
 
     /* ── Add word panel ── */
     .add-panel {
@@ -439,6 +445,7 @@
       <div class="sc-text">
         <div class="sc-title">Lesson</div>
         <div class="sc-sub">Multiple choice · flip cards · typing · match pairs · all in one</div>
+        <div class="daily-progress" id="daily-progress"></div>
       </div>
       <span class="sc-badge" id="badge-lesson">Quiz</span>
     </a>
@@ -448,6 +455,8 @@
       <div class="sc-text">
         <div class="sc-title">Weak Words</div>
         <div class="sc-sub">Words you've been getting wrong — drill these</div>
+        <a class="btn-drill-weak" id="btn-drill-weak" href="lessons.html?pool=weak"
+           style="display:none" onclick="event.stopPropagation()">Drill all →</a>
       </div>
       <span class="sc-badge" id="badge-weak">0 words</span>
     </a>
@@ -757,9 +766,21 @@
     document.getElementById('stat-streak').textContent = VS.getStreak().current || 0;
 
     document.getElementById('badge-lesson').textContent =
-      s.total >= 4 ? s.total + ' words' : 'Need 4+ words';
+      s.total >= 4 ? (s.due > 0 ? s.due + ' due' : s.total + ' words') : 'Need 4+ words';
     document.getElementById('badge-weak').textContent =
       s.weak + (s.weak === 1 ? ' word' : ' words');
+
+    // Daily progress dots
+    const dp  = VS.getDailyProgress();
+    const dots = ['○','○','○'].map((_, i) => i < dp.count ? '●' : '○').join('');
+    const dpEl = document.getElementById('daily-progress');
+    if (dpEl) dpEl.textContent = dp.count >= dp.goal
+      ? '✓ Daily goal complete'
+      : `${dots}  ${dp.count} / ${dp.goal} today`;
+
+    // Drill weak button
+    const drillBtn = document.getElementById('btn-drill-weak');
+    if (drillBtn) drillBtn.style.display = s.weak > 10 ? '' : 'none';
 
     // Disable cards if not enough words
     const lessonCard = document.getElementById('card-lesson');

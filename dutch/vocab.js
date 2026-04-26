@@ -39,7 +39,8 @@
         lastReview:  null,
         // Error tracking
         lessonWrong: 0,
-        lessonRight: 0
+        lessonRight: 0,
+        correctSinceWrong: 0
       };
       words.push(card);
       this.save(words);
@@ -75,18 +76,33 @@
       return limit ? weak.slice(0, limit) : weak;
     },
 
-    // Called by lessons when a word is answered
-    trackLessonResult(id, wasCorrect) {
+    recordAnswer(id, correct) {
       const words = this.getAll();
       const i = words.findIndex(w => w.id === id);
-      if (i === -1) return;
+      if (i < 0) return;
       const w = words[i];
-      if (wasCorrect) {
-        words[i].lessonRight = (w.lessonRight || 0) + 1;
+      if (correct) {
+        const newStreak = (w.correctSinceWrong || 0) + 1;
+        const clearStruggling = newStreak >= 3;
+        const today = new Date().toDateString();
+        const reviewedToday = w.lastReview && new Date(w.lastReview).toDateString() === today;
+        const base = reviewedToday ? w : this.applyGrade(w, 2);
+        words[i] = {
+          ...base,
+          lessonRight: (w.lessonRight || 0) + 1,
+          correctSinceWrong: clearStruggling ? 0 : newStreak,
+          lessonWrong: clearStruggling ? 0 : (w.lessonWrong || 0),
+        };
       } else {
-        words[i].lessonWrong = (w.lessonWrong || 0) + 1;
-        // Mark as due NOW so it surfaces in flashcards
-        words[i].nextReview = Date.now();
+        words[i] = {
+          ...w,
+          lessonWrong: (w.lessonWrong || 0) + 1,
+          correctSinceWrong: 0,
+          nextReview: Date.now(),
+          interval: Math.max(1, Math.round((w.interval || 1) * 0.6)),
+          repetitions: Math.max(0, (w.repetitions || 0) - 1),
+          lastReview: Date.now(),
+        };
       }
       this.save(words);
     },
@@ -162,6 +178,25 @@
       const updated = { lastStudyDate: today, current, longest };
       localStorage.setItem(STREAK_KEY, JSON.stringify(updated));
       return updated;
+    },
+
+    /* ── Daily Goal ──────────────────────────────── */
+    getDailyProgress() {
+      try {
+        const d = JSON.parse(localStorage.getItem('dutch-daily') || '{}');
+        const today = new Date().toISOString().slice(0, 10);
+        if (d.date !== today) return { date: today, count: 0, goal: 3 };
+        return { ...d, goal: 3 };
+      } catch(e) { return { date: new Date().toISOString().slice(0, 10), count: 0, goal: 3 }; }
+    },
+
+    recordLessonComplete() {
+      const today = new Date().toISOString().slice(0, 10);
+      const d = this.getDailyProgress();
+      const count = (d.date === today ? d.count : 0) + 1;
+      localStorage.setItem('dutch-daily', JSON.stringify({ date: today, count }));
+      if (count >= 3) this.recordStudyDay();
+      return count;
     },
 
     /* ── TTS ──────────────────────────────────────── */

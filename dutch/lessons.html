@@ -161,6 +161,7 @@
     .mp-tile.correct  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60 !important; }
     .mp-tile.wrong    { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c !important; }
     .mp-tile:disabled { cursor: default; }
+    .mp-tile.mp-audio { font-size: 1.6em; letter-spacing: 0; }
 
     /* ── Flip card ── */
     #card-area { perspective: 1200px; min-height: 175px; max-height: 280px; flex: 0 1 auto; position: relative; }
@@ -283,6 +284,7 @@
       <div class="sc"><div class="sc-num" id="fin-correct">0</div><div class="sc-lbl">Correct</div></div>
       <div class="sc"><div class="sc-num" id="fin-wrong">0</div><div class="sc-lbl">Wrong</div></div>
       <div class="sc"><div class="sc-num" id="fin-xp">0</div><div class="sc-lbl">XP</div></div>
+      <div class="sc"><div class="sc-num" id="fin-daily">0/3</div><div class="sc-lbl">Today</div></div>
     </div>
     <div class="weak-summary" id="weak-summary" style="display:none">
       <h3>💪 Added to Weak Words — these will appear more often:</h3>
@@ -354,9 +356,13 @@
       btn.textContent = 'Add Words';
       btn.onclick = () => location.href = 'index.html';
     } else {
-      document.getElementById('start-title').textContent = "Let's practice!";
+      const mode = new URLSearchParams(location.search).get('pool');
+      document.getElementById('start-title').textContent =
+        mode === 'weak' ? 'Drill Weak Words' : mode === 'due' ? 'Review Due Words' : "Let's practice!";
       document.getElementById('start-sub').textContent =
-        `${all.length} word${all.length !== 1 ? 's' : ''} in your vocabulary · 3 lives · wrong answers are flagged as weak`;
+        mode === 'weak' ? 'Focusing on words you\'ve been getting wrong — drill until they stick' :
+        mode === 'due'  ? 'Words due for spaced repetition review' :
+        `${all.length} word${all.length !== 1 ? 's' : ''} in your vocabulary · max 3 new per session`;
       btn.onclick = startLesson;
     }
   }
@@ -367,15 +373,36 @@
     const all = VS.getAll();
     if (all.length < 4) { location.href = 'index.html'; return; }
 
-    const now  = Date.now();
-    const due  = all.filter(w => (w.nextReview || 0) <= now);
-    const rest = shuffle(all.filter(w => (w.nextReview || 0) > now));
-    const pool = shuffle([...due, ...rest]).slice(0, SESSION_SIZE);
+    const mode = new URLSearchParams(location.search).get('pool');
+    let pool;
+    if (mode === 'weak') {
+      pool = shuffle(VS.getWeak()).slice(0, SESSION_SIZE);
+    } else if (mode === 'due') {
+      pool = VS.getDue(SESSION_SIZE);
+      if (pool.length < SESSION_SIZE) {
+        const poolIds = new Set(pool.map(w => w.id));
+        pool = [...pool, ...shuffle(all.filter(w => !poolIds.has(w.id))).slice(0, SESSION_SIZE - pool.length)];
+      }
+    } else {
+      const newWords = shuffle(all.filter(w => !w.lastReview)).slice(0, 3);
+      const newIds   = new Set(newWords.map(w => w.id));
+      const dueWords = VS.getDue().filter(w => !newIds.has(w.id));
+      const dueIds   = new Set(dueWords.map(w => w.id));
+      const remaining = shuffle(all.filter(w => !newIds.has(w.id) && !dueIds.has(w.id)));
+      const slots = SESSION_SIZE - newWords.length;
+      pool = shuffle([...newWords, ...[...dueWords, ...remaining].slice(0, slots)]);
+    }
 
     const indivQs = pool.map(w => makeQuestion(w, all)).filter(Boolean);
     const matchRounds = [];
-    for (let i = 0; i + 3 < pool.length; i += 4)
-      matchRounds.push({ type: 'match-pairs', label: 'Match each word with its translation', words: pool.slice(i, i + 4) });
+    for (let i = 0; i + 3 < pool.length; i += 4) {
+      const useListen = VS.hasTTS() && Math.random() < 0.5;
+      matchRounds.push({
+        type:  useListen ? 'listen-match' : 'match-pairs',
+        label: useListen ? 'Tap 🔊 to hear, then match the translation' : 'Match each word with its translation',
+        words: pool.slice(i, i + 4)
+      });
+    }
     questions = [];
     let mi = 0;
     indivQs.forEach((q, idx) => {
@@ -573,7 +600,7 @@
 
     const isType     = currentQ.type === 'type-word'       || currentQ.type === 'listen-type';
     const isScramble = currentQ.type === 'sentence-scramble';
-    const isMatch    = currentQ.type === 'match-pairs';
+    const isMatch    = currentQ.type === 'match-pairs' || currentQ.type === 'listen-match';
     const isFlipCard = currentQ.type === 'flip-card';
     const isTypeCard = currentQ.type === 'type-card';
     const isCard     = isFlipCard || isTypeCard;
@@ -623,7 +650,7 @@
     else          document.getElementById('c' + i).classList.add('correct');
 
     // Track result → feeds back into SRS + weak words
-    VS.trackLessonResult(currentQ.word.id, isRight);
+    VS.recordAnswer(currentQ.word.id, isRight);
 
     if (isRight) {
       correctCount++;
@@ -688,7 +715,8 @@
       weakSummary.style.display = 'none';
     }
 
-    VS.recordStudyDay();
+    const dailyCount = VS.recordLessonComplete();
+    document.getElementById('fin-daily').textContent = dailyCount + ' / 3';
     showScreen('screen-finish');
     setTimeout(() => SFX.finish(), 300);
   }
@@ -712,7 +740,7 @@
     const isRight = typed.toLowerCase() === correct.toLowerCase() ||
       lev(typed.toLowerCase(), correct.toLowerCase()) <= Math.floor(correct.length / 6);
 
-    VS.trackLessonResult(currentQ.word.id, isRight);
+    VS.recordAnswer(currentQ.word.id, isRight);
     inp.style.borderColor = isRight ? '#27ae60' : '#e74c3c';
 
     if (isRight) {
@@ -772,7 +800,7 @@
     const assembled = scrambleSelected.map(idx => scrambleWords[idx]).join(' ');
     const isRight   = assembled === currentQ.answer;
 
-    VS.trackLessonResult(currentQ.word.id, isRight);
+    VS.recordAnswer(currentQ.word.id, isRight);
     document.querySelectorAll('.word-tile').forEach(t => { t.disabled = true; });
 
     if (isRight) {
@@ -810,12 +838,20 @@
     mpWords      = currentQ.words;
     mpLeftOrder  = shuffle([0, 1, 2, 3]);
     mpRightOrder = shuffle([0, 1, 2, 3]);
+    const isListen = currentQ.type === 'listen-match';
     document.getElementById('mp-col-left').innerHTML = mpLeftOrder.map((wi, ti) =>
-      `<button class="mp-tile" id="mlt${ti}" onclick="mpSelectLeft(${ti})">${escHtml(mpWords[wi].term)}</button>`
+      isListen
+        ? `<button class="mp-tile mp-audio" id="mlt${ti}" onclick="mpAudioLeft(${ti},${JSON.stringify(mpWords[wi].term)})">🔊</button>`
+        : `<button class="mp-tile" id="mlt${ti}" onclick="mpSelectLeft(${ti})">${escHtml(mpWords[wi].term)}</button>`
     ).join('');
     document.getElementById('mp-col-right').innerHTML = mpRightOrder.map((wi, ri) =>
       `<button class="mp-tile" id="mrt${ri}" onclick="mpSelectRight(${ri})">${escHtml(mpWords[wi].translation)}</button>`
     ).join('');
+  }
+
+  function mpAudioLeft(ti, term) {
+    VS.speak(term);
+    mpSelectLeft(ti);
   }
 
   function mpSelectLeft(ti) {
@@ -853,7 +889,7 @@
       lBtn.classList.add('correct');     rBtn.classList.add('correct');
       lBtn.disabled = true;              rBtn.disabled = true;
       SFX.correct();
-      VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, true);
+      VS.recordAnswer(mpWords[mpLeftOrder[ti]].id, true);
       mpMatched++;
       if (mpMatched === mpWords.length) setTimeout(() => nextQuestion(), 700);
     } else {
@@ -861,7 +897,7 @@
       SFX.wrong();
       if (!wrongWords.find(w => w.id === mpWords[mpLeftOrder[ti]].id))
         wrongWords.push(mpWords[mpLeftOrder[ti]]);
-      VS.trackLessonResult(mpWords[mpLeftOrder[ti]].id, false);
+      VS.recordAnswer(mpWords[mpLeftOrder[ti]].id, false);
       lBtn.classList.remove('selected'); rBtn.classList.remove('selected');
       lBtn.classList.add('wrong');       rBtn.classList.add('wrong');
       setTimeout(() => { lBtn.classList.remove('wrong'); rBtn.classList.remove('wrong'); }, 500);
@@ -919,7 +955,7 @@
   function fcGrade(isCorrect) {
     if (answered) return;
     answered = true;
-    VS.trackLessonResult(currentQ.word.id, isCorrect);
+    VS.recordAnswer(currentQ.word.id, isCorrect);
     if (isCorrect) {
       correctCount++;
       SFX.correct();
@@ -949,7 +985,7 @@
     document.getElementById('fc-wrap').classList.add('flipped');
     fcRevealed = true;
     if (VS.hasTTS()) VS.speak(currentQ.word.term);
-    VS.trackLessonResult(currentQ.word.id, isRight);
+    VS.recordAnswer(currentQ.word.id, isRight);
     if (isRight) {
       correctCount++;
       SFX.correct();
