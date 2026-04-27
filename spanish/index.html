@@ -39,18 +39,16 @@
     }
     .btn-settings:hover { color: white; }
 
-    /* ── Daily summary bar ── */
-    .summary-bar {
-      background: #c0392b; color: white;
-      display: flex; justify-content: center; gap: 0;
+    /* ── Stats strip ── */
+    .stat-strip {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      justify-content: center; margin-bottom: 20px;
     }
-    .sum-item {
-      flex: 1; max-width: 110px; text-align: center;
-      padding: 12px 8px; border-right: 1px solid rgba(255,255,255,0.15);
+    .stat-chip {
+      background: #f4f6f8; border-radius: 20px;
+      padding: 5px 12px; font-size: 0.78em; color: #5d6d7e; font-weight: 600;
     }
-    .sum-item:last-child { border-right: none; }
-    .sum-num { font-size: 1.5em; font-weight: 800; line-height: 1; }
-    .sum-lbl { font-size: 0.7em; opacity: 0.78; margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+    .stat-chip span { color: #2c3e50; }
 
     /* ── Main ── */
     .main { max-width: 600px; margin: 0 auto; padding: 20px 16px 60px; }
@@ -426,15 +424,15 @@
   <button class="btn-settings" onclick="openSettings()" title="Settings">⚙️</button>
 </header>
 
-<div class="summary-bar">
-  <div class="sum-item"><div class="sum-num" id="stat-total">0</div><div class="sum-lbl">Words</div></div>
-  <div class="sum-item"><div class="sum-num" id="stat-due">0</div><div class="sum-lbl">Due</div></div>
-  <div class="sum-item"><div class="sum-num" id="stat-new">0</div><div class="sum-lbl">New</div></div>
-  <div class="sum-item"><div class="sum-num" id="stat-weak">0</div><div class="sum-lbl">Struggling</div></div>
-  <div class="sum-item"><div class="sum-num" id="stat-streak">0</div><div class="sum-lbl">🔥 Streak</div></div>
-</div>
-
 <div class="main">
+
+  <div class="stat-strip">
+    <span class="stat-chip"><span id="stat-total">0</span> words</span>
+    <span class="stat-chip"><span id="stat-due">0</span> due</span>
+    <span class="stat-chip"><span id="stat-new">0</span> new</span>
+    <span class="stat-chip"><span id="stat-weak">0</span> weak</span>
+    <span class="stat-chip">🔥 <span id="stat-streak">0</span></span>
+  </div>
 
   <div class="sec-label">Study</div>
   <div class="study-grid">
@@ -739,13 +737,6 @@
 
 <script src="vocab.js"></script>
 <script>
-  window._ttsToast = function(msg) {
-    const el = document.createElement('div');
-    el.textContent = '🔊 ' + msg;
-    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:10px 18px;border-radius:10px;font-size:0.8em;z-index:9999;max-width:85vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.25)';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 10000);
-  };
   let pendingExamples = [];
   let sortMode = 'recent';
   let activeTagFilter = null;
