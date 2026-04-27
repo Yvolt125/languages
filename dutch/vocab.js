@@ -222,9 +222,19 @@
       return 'speechSynthesis' in window || !!this.getSharedSettings().googleTtsKey;
     },
 
+    _audioCtx: null,
+    _audioNode: null,
     _currentAudio: null,
 
+    _getAudioCtx() {
+      if (!this._audioCtx) {
+        this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return this._audioCtx;
+    },
+
     _stopCurrent() {
+      if (this._audioNode) { try { this._audioNode.stop(); } catch {} this._audioNode = null; }
       if (this._currentAudio) { this._currentAudio.pause(); this._currentAudio = null; }
       if ('speechSynthesis' in window) speechSynthesis.cancel();
     },
@@ -237,7 +247,7 @@
       try {
         const cache = await caches.open('accento-audio-v1');
         const r = await cache.match(key);
-        return r ? URL.createObjectURL(await r.blob()) : null;
+        return r ? r.arrayBuffer() : null;
       } catch { return null; }
     },
 
@@ -250,6 +260,8 @@
 
     speak(text, lang) {
       this._stopCurrent();
+      // Resume AudioContext synchronously within the user gesture — required for iOS autoplay
+      try { this._getAudioCtx().resume(); } catch {}
       const ss = this.getSharedSettings();
       const effectiveLang = lang || 'nl-NL';
       if (ss.googleTtsKey) {
@@ -267,39 +279,46 @@
       const voices = voiceMap[lang] || voiceMap['nl-NL'];
       const voiceName = voices[gender] || voices.female;
       const cacheKey = this._ttsKey(text, lang);
-      const cachedUrl = await this._ttsFromCache(cacheKey);
-      if (cachedUrl) {
-        const audio = new Audio(cachedUrl);
-        this._currentAudio = audio;
-        audio.play().catch(() => {});
-        audio.onended = () => URL.revokeObjectURL(cachedUrl);
-        return;
+
+      let buf = await this._ttsFromCache(cacheKey);
+
+      if (!buf) {
+        if (!navigator.onLine) { this._speakBrowser(text, lang); return; }
+        try {
+          const resp = await fetch(
+            `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                input: { text },
+                voice: { languageCode: lang, name: voiceName },
+                audioConfig: { audioEncoding: 'MP3' }
+              })
+            }
+          );
+          if (!resp.ok) throw new Error(`TTS ${resp.status}`);
+          const data = await resp.json();
+          const binary = atob(data.audioContent);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          buf = bytes.buffer;
+          await this._ttsStore(cacheKey, buf.slice(0));
+        } catch {
+          this._speakBrowser(text, lang);
+          return;
+        }
       }
-      if (!navigator.onLine) { this._speakBrowser(text, lang); return; }
+
       try {
-        const resp = await fetch(
-          `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              input: { text },
-              voice: { languageCode: lang, name: voiceName },
-              audioConfig: { audioEncoding: 'MP3' }
-            })
-          }
-        );
-        if (!resp.ok) throw new Error(`TTS ${resp.status}`);
-        const data = await resp.json();
-        const binary = atob(data.audioContent);
-        const buf = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
-        await this._ttsStore(cacheKey, buf.buffer);
-        const url = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }));
-        const audio = new Audio(url);
-        this._currentAudio = audio;
-        audio.play().catch(() => {});
-        audio.onended = () => URL.revokeObjectURL(url);
+        const ctx = this._getAudioCtx();
+        const decoded = await ctx.decodeAudioData(buf.slice(0));
+        const node = ctx.createBufferSource();
+        node.buffer = decoded;
+        node.connect(ctx.destination);
+        node.start();
+        this._audioNode = node;
+        node.onended = () => { if (this._audioNode === node) this._audioNode = null; };
       } catch {
         this._speakBrowser(text, lang);
       }
