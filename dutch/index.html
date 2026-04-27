@@ -720,16 +720,15 @@
     <input id="gemini-key-input" type="password" placeholder="AIza…" autocomplete="off" style="margin-bottom:6px">
     <div class="key-hint">aistudio.google.com · Gemini 2.5 Flash</div>
     <div style="border-top:1px solid #eee;margin:16px 0 12px"></div>
-    <label>OpenAI TTS Key <span style="font-size:0.8em;color:#95a5a6">(optional — better voice + offline cache)</span></label>
-    <input id="openai-tts-key" type="password" placeholder="sk-…" autocomplete="off" style="margin-bottom:6px">
-    <div class="key-hint" style="margin-bottom:14px">platform.openai.com · TTS-1 · cached after first use</div>
+    <label>Google Cloud TTS Key <span style="font-size:0.8em;color:#95a5a6">(optional — native voice + offline cache)</span></label>
+    <input id="google-tts-key" type="password" placeholder="AIza…" autocomplete="off" style="margin-bottom:6px">
+    <div class="key-hint" style="margin-bottom:14px">console.cloud.google.com · Neural2 · cached after first use</div>
     <label style="margin-bottom:6px;display:block">Voice</label>
     <div style="display:flex;gap:8px;margin-bottom:4px">
-      <button class="provider-btn" id="voice-nova"    onclick="selectVoice('nova')">Nova</button>
-      <button class="provider-btn" id="voice-shimmer" onclick="selectVoice('shimmer')">Shimmer</button>
-      <button class="provider-btn" id="voice-onyx"    onclick="selectVoice('onyx')">Onyx</button>
+      <button class="provider-btn" id="voice-female" onclick="selectVoice('female')">Female</button>
+      <button class="provider-btn" id="voice-male"   onclick="selectVoice('male')">Male</button>
     </div>
-    <div class="key-hint">Nova: natural female · Shimmer: soft female · Onyx: deep male</div>
+    <div class="key-hint">Neural2 — native Dutch pronunciation</div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeSettings()">Cancel</button>
       <button class="btn-ok"     onclick="saveApiKey()">Save</button>
@@ -1413,12 +1412,12 @@
     const ss = VS.getSharedSettings();
     document.getElementById('claude-key-input').value = s.claudeApiKey  || '';
     document.getElementById('gemini-key-input').value = s.geminiApiKey  || '';
-    document.getElementById('openai-tts-key').value   = ss.openaiTtsKey || '';
+    document.getElementById('google-tts-key').value   = ss.googleTtsKey || '';
     const p = s.aiProvider || 'claude';
     document.getElementById('prov-claude').classList.toggle('active', p === 'claude');
     document.getElementById('prov-gemini').classList.toggle('active', p === 'gemini');
-    const v = ss.ttsVoice || 'nova';
-    ['nova','shimmer','onyx'].forEach(n =>
+    const v = ss.ttsVoice || 'female';
+    ['female','male'].forEach(n =>
       document.getElementById('voice-' + n).classList.toggle('active', v === n));
     document.getElementById('settings-modal').classList.add('open');
   }
@@ -1431,13 +1430,13 @@
       geminiApiKey: document.getElementById('gemini-key-input').value.trim()
     });
     VS.saveSharedSettings({
-      openaiTtsKey: document.getElementById('openai-tts-key').value.trim()
+      googleTtsKey: document.getElementById('google-tts-key').value.trim()
     });
     closeSettings();
   }
   function selectVoice(v) {
     VS.saveSharedSettings({ ttsVoice: v });
-    ['nova','shimmer','onyx'].forEach(n =>
+    ['female','male'].forEach(n =>
       document.getElementById('voice-' + n).classList.toggle('active', v === n));
   }
   document.getElementById('settings-modal').addEventListener('click', function(e) {

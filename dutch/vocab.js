@@ -219,7 +219,7 @@
 
     /* ── TTS ──────────────────────────────────────── */
     hasTTS() {
-      return 'speechSynthesis' in window || !!this.getSharedSettings().openaiTtsKey;
+      return 'speechSynthesis' in window || !!this.getSharedSettings().googleTtsKey;
     },
 
     _currentAudio: null,
@@ -252,14 +252,20 @@
       this._stopCurrent();
       const ss = this.getSharedSettings();
       const effectiveLang = lang || 'nl-NL';
-      if (ss.openaiTtsKey) {
-        this._speakOpenAI(text, effectiveLang, ss.openaiTtsKey, ss.ttsVoice || 'nova');
+      if (ss.googleTtsKey) {
+        this._speakGoogleTTS(text, effectiveLang, ss.googleTtsKey, ss.ttsVoice || 'female');
       } else {
         this._speakBrowser(text, effectiveLang);
       }
     },
 
-    async _speakOpenAI(text, lang, apiKey, voice) {
+    async _speakGoogleTTS(text, lang, apiKey, gender) {
+      const voiceMap = {
+        'es-ES': { female: 'es-ES-Neural2-A', male: 'es-ES-Neural2-B' },
+        'nl-NL': { female: 'nl-NL-Neural2-A', male: 'nl-NL-Neural2-E' },
+      };
+      const voices = voiceMap[lang] || voiceMap['nl-NL'];
+      const voiceName = voices[gender] || voices.female;
       const cacheKey = this._ttsKey(text, lang);
       const cachedUrl = await this._ttsFromCache(cacheKey);
       if (cachedUrl) {
@@ -271,17 +277,24 @@
       }
       if (!navigator.onLine) { this._speakBrowser(text, lang); return; }
       try {
-        const resp = await fetch('https://api.openai.com/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
-          },
-          body: JSON.stringify({ model: 'tts-1', input: text, voice })
-        });
+        const resp = await fetch(
+          `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              input: { text },
+              voice: { languageCode: lang, name: voiceName },
+              audioConfig: { audioEncoding: 'MP3' }
+            })
+          }
+        );
         if (!resp.ok) throw new Error(`TTS ${resp.status}`);
-        const buf = await resp.arrayBuffer();
-        await this._ttsStore(cacheKey, buf);
+        const data = await resp.json();
+        const binary = atob(data.audioContent);
+        const buf = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+        await this._ttsStore(cacheKey, buf.buffer);
         const url = URL.createObjectURL(new Blob([buf], { type: 'audio/mpeg' }));
         const audio = new Audio(url);
         this._currentAudio = audio;
