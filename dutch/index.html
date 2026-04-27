@@ -739,6 +739,13 @@
 
 <script src="vocab.js"></script>
 <script>
+  window._ttsToast = function(msg) {
+    const el = document.createElement('div');
+    el.textContent = '🔊 ' + msg;
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:10px 18px;border-radius:10px;font-size:0.8em;z-index:9999;max-width:85vw;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.25)';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 10000);
+  };
   let pendingExamples = [];
   let sortMode = 'recent';
   let activeTagFilter = null;

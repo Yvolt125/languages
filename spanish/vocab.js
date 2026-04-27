@@ -297,14 +297,15 @@
               })
             }
           );
-          if (!resp.ok) throw new Error(`TTS ${resp.status}`);
+          if (!resp.ok) throw new Error(`TTS ${resp.status}: ${await resp.text().catch(()=>'')}`);
           const data = await resp.json();
           const binary = atob(data.audioContent);
           const bytes = new Uint8Array(binary.length);
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           buf = bytes.buffer;
           await this._ttsStore(cacheKey, buf.slice(0));
-        } catch {
+        } catch(e) {
+          if (window._ttsToast) window._ttsToast(e.message || String(e));
           this._speakBrowser(text, lang);
           return;
         }
