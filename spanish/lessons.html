@@ -28,7 +28,7 @@
     .progress-fill { height: 100%; background: #2980b9; transition: width .3s; }
 
     /* ── Screens ── */
-    .screen { flex: 1; display: none; flex-direction: column; }
+    .screen { flex: 1; min-height: 0; display: none; flex-direction: column; }
     .screen.active { display: flex; }
 
     .center-box {
@@ -50,7 +50,7 @@
     }
 
     /* ── Question screen ── */
-    #screen-q { padding: 16px 16px 20px; gap: 12px; align-items: stretch; overflow-y: auto; }
+    #screen-q { padding: 16px 16px 20px; gap: 12px; align-items: stretch; overflow: hidden; }
 
     .q-label {
       font-size: 0.8em; font-weight: 700; text-transform: uppercase;
@@ -71,9 +71,9 @@
     }
     .btn-tts:hover { background: #d4e9f7; }
 
-    .choices { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .choices { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
     .choice-btn {
-      flex: 1; width: 100%; padding: 10px 18px; background: white; color: #2c3e50;
+      flex: 1; min-height: 44px; width: 100%; padding: 8px 18px; background: white; color: #2c3e50;
       border: 2px solid #e1e8ed; border-radius: 14px; font-size: 0.93em;
       font-weight: 600; cursor: pointer; text-align: left;
       transition: border-color .15s, background .15s;
@@ -148,8 +148,8 @@
     .word-tile:hover:not(:disabled) { border-color: #2980b9; }
     .word-tile:disabled { opacity: 0.4; cursor: default; }
     .word-tile.in-answer { border-color: #2980b9; background: #eaf4fb; }
-    .mp-grid { display: flex; gap: 10px; flex: 1; }
-    .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .mp-grid { display: flex; gap: 10px; flex: 1; min-height: 0; max-height: 500px; }
+    .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
     .mp-tile {
       flex: 1; width: 100%; padding: 10px;
       background: white; border: 2px solid #e1e8ed; border-radius: 16px;
