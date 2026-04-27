@@ -20,13 +20,21 @@
     },
 
     /* ── CRUD ─────────────────────────────────────── */
+    _titleCase(s) {
+      return (s || '').trim().replace(/\b\w/g, c => c.toUpperCase());
+    },
+    _sentenceCase(s) {
+      const t = (s || '').trim();
+      return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+    },
+
     add(data) {
       const words = this.getAll();
       const card = {
         id:           uid(),
         term:         (data.term         || '').trim(),
-        translation:  (data.translation  || '').trim(),
-        definition:   (data.definition   || '').trim(),
+        translation:  this._titleCase(data.translation  || ''),
+        definition:   this._sentenceCase(data.definition   || ''),
         partOfSpeech: (data.partOfSpeech || '').trim(),
         examples:      data.examples     || [],
         tags:          data.tags         || [],
@@ -51,6 +59,8 @@
       const words = this.getAll();
       const i = words.findIndex(w => w.id === id);
       if (i === -1) return null;
+      if (changes.translation !== undefined) changes = { ...changes, translation: this._titleCase(changes.translation) };
+      if (changes.definition  !== undefined) changes = { ...changes, definition:  this._sentenceCase(changes.definition) };
       words[i] = { ...words[i], ...changes };
       this.save(words);
       return words[i];

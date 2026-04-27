@@ -88,19 +88,17 @@
     .lesson .sc-icon { background: #eaf4fb; }
     .weak   .sc-icon { background: #fef5e7; }
 
-    .sc-text { flex: 1; }
+    .sc-text { flex: 1; min-width: 0; }
     .sc-title { font-weight: 700; color: #2c3e50; font-size: 0.95em; }
     .sc-sub   { font-size: 0.78em; color: #7f8c8d; margin-top: 2px; }
-    .sc-badge {
-      font-size: 0.72em; font-weight: 700; padding: 4px 10px;
-      border-radius: 12px; flex-shrink: 0;
-    }
+    .sc-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+    .sc-badge { font-size: 0.72em; font-weight: 700; padding: 4px 10px; border-radius: 12px; }
     .flash  .sc-badge { background: #fdedec; color: #c0392b; }
     .lesson .sc-badge { background: #eaf4fb; color: #2980b9; }
     .weak   .sc-badge { background: #fef5e7; color: #e67e22; }
-    .daily-progress { font-size: 0.78em; color: #7f8c8d; margin-top: 4px; letter-spacing: 1px; }
+    .daily-progress { font-size: 0.68em; color: #95a5a6; letter-spacing: 1.5px; text-align: right; }
     .btn-drill-weak {
-      display: inline-block; margin-top: 6px; padding: 4px 10px;
+      display: inline-block; padding: 4px 10px;
       background: #e67e22; color: white; border-radius: 8px;
       font-size: 0.72em; font-weight: 700; text-decoration: none;
     }
@@ -444,22 +442,26 @@
       <div class="sc-icon">🎯</div>
       <div class="sc-text">
         <div class="sc-title">Lesson</div>
-        <div class="sc-sub">Multiple choice · flip cards · typing · match pairs · all in one</div>
+        <div class="sc-sub">Multiple choice · flip cards · typing · match pairs</div>
+      </div>
+      <div class="sc-right">
+        <span class="sc-badge" id="badge-lesson">Quiz</span>
         <div class="daily-progress" id="daily-progress"></div>
       </div>
-      <span class="sc-badge" id="badge-lesson">Quiz</span>
     </a>
 
-    <a class="study-card weak" id="card-weak" href="lessons.html">
+    <div class="study-card weak" id="card-weak" onclick="location.href='lessons.html'" style="cursor:pointer">
       <div class="sc-icon">💪</div>
       <div class="sc-text">
         <div class="sc-title">Weak Words</div>
         <div class="sc-sub">Words you've been getting wrong — drill these</div>
+      </div>
+      <div class="sc-right">
+        <span class="sc-badge" id="badge-weak">0 words</span>
         <a class="btn-drill-weak" id="btn-drill-weak" href="lessons.html?pool=weak"
            style="display:none" onclick="event.stopPropagation()">Drill all →</a>
       </div>
-      <span class="sc-badge" id="badge-weak">0 words</span>
-    </a>
+    </div>
 
   </div>
 
@@ -743,6 +745,9 @@
   let activeMissingFilter = null;
   let _generating = false;
 
+  function titleCase(s) { return (s || '').trim().replace(/\b\w/g, c => c.toUpperCase()); }
+  function sentenceCase(s) { const t = (s || '').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
+
   /* ── Offline ─────────────────────────── */
   function updateOfflineUI() {
     const offline = !navigator.onLine;
@@ -963,7 +968,7 @@
         <div class="vocab-main">
           <div class="vocab-meta">
             <div class="vocab-term">${esc(w.term)}</div>
-            ${w.translation ? `<div class="vocab-trans">${esc(w.translation)}</div>` : ''}
+            ${w.translation ? `<div class="vocab-trans">${esc(titleCase(w.translation))}</div>` : ''}
             ${w.partOfSpeech ? `<div class="vocab-pos">${esc(w.partOfSpeech)}</div>` : ''}
           </div>
           <div class="vocab-badges">
