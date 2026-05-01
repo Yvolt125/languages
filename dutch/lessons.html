@@ -50,7 +50,9 @@
     }
 
     /* ── Question screen ── */
-    #screen-q { padding: 16px 16px 20px; gap: 12px; align-items: stretch; overflow: hidden; }
+    #screen-q { padding: 12px 16px 12px; gap: 8px; align-items: stretch; overflow: hidden; }
+    .q-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+    .q-footer { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
 
     .q-label {
       font-size: 0.8em; font-weight: 700; text-transform: uppercase;
@@ -58,7 +60,7 @@
     }
 
     .q-prompt {
-      background: white; border-radius: 16px; padding: 28px 24px;
+      background: white; border-radius: 16px; padding: 14px 18px;
       text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
       border-top: 4px solid #2980b9;
     }
@@ -73,7 +75,7 @@
 
     .choices { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
     .choice-btn {
-      flex: 1; min-height: 44px; width: 100%; padding: 8px 18px; background: white; color: #2c3e50;
+      flex: 1; min-height: 52px; max-height: 80px; width: 100%; padding: 8px 18px; background: white; color: #2c3e50;
       border: 2px solid #e1e8ed; border-radius: 14px; font-size: 0.93em;
       font-weight: 600; cursor: pointer; text-align: left;
       transition: border-color .15s, background .15s;
@@ -133,7 +135,7 @@
       padding: 15px; background: #2980b9; color: white; border: none;
       border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer;
     }
-    .scramble-area { display: flex; flex-direction: column; gap: 12px; }
+    .scramble-area { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
     .scramble-answer {
       min-height: 64px; background: white; border-radius: 14px; padding: 10px 12px;
       display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
@@ -141,14 +143,14 @@
     }
     .scramble-bank { display: flex; flex-wrap: wrap; gap: 10px; }
     .word-tile {
-      padding: 12px 18px; background: white; border: 2px solid #c8d6e5;
+      padding: 9px 14px; background: white; border: 2px solid #c8d6e5;
       border-radius: 12px; cursor: pointer; font-size: 1em; font-weight: 600;
       color: #2c3e50; transition: border-color .15s, opacity .15s;
     }
     .word-tile:hover:not(:disabled) { border-color: #2980b9; }
     .word-tile:disabled { opacity: 0.4; cursor: default; }
     .word-tile.in-answer { border-color: #2980b9; background: #eaf4fb; }
-    .mp-grid { display: flex; gap: 10px; flex: 1; min-height: 0; max-height: 500px; }
+    .mp-grid { display: flex; gap: 10px; flex: 1; min-height: 0; }
     .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
     .mp-tile {
       flex: 1; width: 100%; padding: 10px;
@@ -166,16 +168,16 @@
     .mp-tile.mp-audio { font-size: 2em; letter-spacing: 0; }
 
     /* ── Flip card ── */
-    #card-area { perspective: 1200px; min-height: 175px; max-height: 280px; flex: 0 1 auto; position: relative; }
+    #card-area { perspective: 1200px; flex: 1; min-height: 0; max-height: min(55vh, 400px); display: flex; flex-direction: column; gap: 10px; }
     .fc-wrap {
-      width: 100%; height: 100%; min-height: 175px;
+      flex: 1; min-height: 0; width: 100%;
       transform-style: preserve-3d;
       transition: transform .42s cubic-bezier(.4,0,.2,1);
       position: relative;
     }
     .fc-wrap.flipped { transform: rotateY(180deg); }
     .fc-front, .fc-back {
-      position: absolute; inset: 0; min-height: 175px;
+      position: absolute; inset: 0;
       backface-visibility: hidden; -webkit-backface-visibility: hidden;
       background: white; border-radius: 20px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.10);
@@ -223,58 +225,62 @@
 
 <!-- Question screen -->
 <div class="screen" id="screen-q">
-  <div class="q-label"    id="q-label"></div>
-  <div class="q-prompt" id="q-prompt">
-    <div class="prompt-word" id="prompt-word"></div>
-    <div class="prompt-hint" id="prompt-hint"></div>
-    <button class="btn-tts" id="btn-tts" style="display:none" onclick="speakPrompt()">🔊 Listen</button>
-  </div>
-  <div class="choices" id="choices"></div>
-  <div class="type-area" id="type-area" style="display:none">
-    <input type="text" id="type-input" class="type-input"
-           placeholder="Type your answer…"
-           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-           onkeydown="if(event.key==='Enter')submitType()">
-    <button class="btn-submit" onclick="submitType()">Check →</button>
-  </div>
-  <div class="scramble-area" id="scramble-area" style="display:none">
-    <div class="scramble-answer" id="scramble-answer"></div>
-    <div class="scramble-bank"   id="scramble-bank"></div>
-  </div>
-  <div class="mp-grid" id="mp-grid" style="display:none">
-    <div class="mp-col" id="mp-col-left"></div>
-    <div class="mp-col" id="mp-col-right"></div>
-  </div>
-  <div id="card-area" style="display:none">
-    <div class="fc-wrap" id="fc-wrap" onclick="onFcClick()">
-      <div class="fc-front" id="fc-front">
-        <div class="fc-term" id="fc-term"></div>
-        <div class="fc-tap-hint" id="fc-tap-hint">tap to reveal</div>
-        <button class="btn-tts" id="fc-btn-tts" style="display:none"
-                onclick="event.stopPropagation(); VS.speak(currentQ.word.term)">🔊 Listen</button>
-        <div class="fc-type-area" id="fc-type-area" style="display:none">
-          <input class="fc-type-input" id="fc-type-input" type="text"
-                 placeholder="Type the Dutch word…"
-                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                 onkeydown="if(event.key==='Enter')submitFcType()">
-          <button class="btn-fc-check" onclick="submitFcType()">Check →</button>
+  <div class="q-content">
+    <div class="q-label"    id="q-label"></div>
+    <div class="q-prompt" id="q-prompt">
+      <div class="prompt-word" id="prompt-word"></div>
+      <div class="prompt-hint" id="prompt-hint"></div>
+      <button class="btn-tts" id="btn-tts" style="display:none" onclick="speakPrompt()">🔊 Listen</button>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div class="type-area" id="type-area" style="display:none">
+      <input type="text" id="type-input" class="type-input"
+             placeholder="Type your answer…"
+             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter')submitType()">
+      <button class="btn-submit" onclick="submitType()">Check →</button>
+    </div>
+    <div class="scramble-area" id="scramble-area" style="display:none">
+      <div class="scramble-answer" id="scramble-answer"></div>
+      <div class="scramble-bank"   id="scramble-bank"></div>
+    </div>
+    <div class="mp-grid" id="mp-grid" style="display:none">
+      <div class="mp-col" id="mp-col-left"></div>
+      <div class="mp-col" id="mp-col-right"></div>
+    </div>
+    <div id="card-area" style="display:none">
+      <div class="fc-wrap" id="fc-wrap" onclick="onFcClick()">
+        <div class="fc-front" id="fc-front">
+          <div class="fc-term" id="fc-term"></div>
+          <div class="fc-tap-hint" id="fc-tap-hint">tap to reveal</div>
+          <button class="btn-tts" id="fc-btn-tts" style="display:none"
+                  onclick="event.stopPropagation(); VS.speak(currentQ.word.term)">🔊 Listen</button>
+          <div class="fc-type-area" id="fc-type-area" style="display:none">
+            <input class="fc-type-input" id="fc-type-input" type="text"
+                   placeholder="Type the Dutch word…"
+                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                   onkeydown="if(event.key==='Enter')submitFcType()">
+            <button class="btn-fc-check" onclick="submitFcType()">Check →</button>
+          </div>
+        </div>
+        <div class="fc-back" id="fc-back">
+          <div class="fc-back-trans" id="fc-back-trans"></div>
+          <div class="fc-back-def"   id="fc-back-def"></div>
         </div>
       </div>
-      <div class="fc-back" id="fc-back">
-        <div class="fc-back-trans" id="fc-back-trans"></div>
-        <div class="fc-back-def"   id="fc-back-def"></div>
+      <div class="fc-grade-row" id="fc-grade-row">
+        <button class="btn-grade-wrong"   onclick="fcGrade(false)">✗ Wrong</button>
+        <button class="btn-grade-correct" onclick="fcGrade(true)">✓ Correct</button>
       </div>
     </div>
-    <div class="fc-grade-row" id="fc-grade-row">
-      <button class="btn-grade-wrong"   onclick="fcGrade(false)">✗ Wrong</button>
-      <button class="btn-grade-correct" onclick="fcGrade(true)">✓ Correct</button>
+  </div>
+  <div class="q-footer">
+    <div class="feedback" id="feedback">
+      <div class="fb-head" id="fb-head"></div>
+      <div class="fb-body" id="fb-body"></div>
     </div>
+    <button class="btn-continue" id="btn-continue" onclick="nextQuestion()">Continue →</button>
   </div>
-  <div class="feedback" id="feedback">
-    <div class="fb-head" id="fb-head"></div>
-    <div class="fb-body" id="fb-body"></div>
-  </div>
-  <button class="btn-continue" id="btn-continue" onclick="nextQuestion()">Continue →</button>
 </div>
 
 <!-- Finish screen -->
