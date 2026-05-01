@@ -1,4 +1,4 @@
-const CACHE_NAME = 'accento-v22';
+const CACHE_NAME = 'accento-v23';
 
 const PRE_CACHE = [
   './index.html',

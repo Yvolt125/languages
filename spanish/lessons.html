@@ -50,32 +50,48 @@
     }
 
     /* ── Question screen ── */
-    #screen-q { padding: 12px 16px 12px; gap: 8px; align-items: stretch; overflow: hidden; }
-    .q-content { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-    .q-footer { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    /* q-content: fills remaining height above footer, never scrolls itself */
+    #screen-q { padding: 0; gap: 0; align-items: stretch; overflow: hidden; }
+    .q-content {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      padding: 12px 16px 0; gap: 10px;
+      overflow: hidden;
+    }
+    /* q-footer is always pinned at bottom — Continue can never be clipped */
+    .q-footer {
+      flex-shrink: 0;
+      padding: 8px 16px 20px; gap: 8px;
+      display: flex; flex-direction: column;
+    }
 
     .q-label {
+      flex-shrink: 0;
       font-size: 0.8em; font-weight: 700; text-transform: uppercase;
       letter-spacing: 1px; color: #5a6a7a; text-align: center;
     }
 
+    /* Prompt card: compact, never stretches */
     .q-prompt {
+      flex-shrink: 0;
       background: white; border-radius: 16px; padding: 14px 18px;
       text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
       border-top: 4px solid #2980b9;
     }
-    .prompt-word { font-size: 1.75em; font-weight: 800; color: #2c3e50; line-height: 1.2; }
-    .prompt-word.is-sentence { font-size: 1.15em; font-weight: 700; line-height: 1.4; }
-    .prompt-hint { font-size: 0.82em; color: #7f8c8d; margin-top: 6px; line-height: 1.4; }
+    .prompt-word { font-size: 1.6em; font-weight: 800; color: #2c3e50; line-height: 1.2; }
+    .prompt-word.is-sentence { font-size: 1.05em; font-weight: 700; line-height: 1.4; }
+    .prompt-hint { font-size: 0.8em; color: #7f8c8d; margin-top: 5px; line-height: 1.4; }
     .btn-tts {
-      margin-top: 12px; background: #eaf4fb; border: none; border-radius: 8px;
-      padding: 7px 16px; font-size: 0.82em; cursor: pointer; color: #2980b9; font-weight: 600;
+      margin-top: 10px; background: #eaf4fb; border: none; border-radius: 8px;
+      padding: 6px 14px; font-size: 0.8em; cursor: pointer; color: #2980b9; font-weight: 600;
     }
     .btn-tts:hover { background: #d4e9f7; }
 
-    .choices { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+    /* Multiple choice: fixed-height buttons, no stretching */
+    .choices { display: flex; flex-direction: column; gap: 9px; }
     .choice-btn {
-      flex: 1; min-height: 52px; max-height: 80px; width: 100%; padding: 8px 18px; background: white; color: #2c3e50;
+      width: 100%; min-height: 56px; padding: 10px 16px;
+      background: white; color: #2c3e50;
       border: 2px solid #e1e8ed; border-radius: 14px; font-size: 0.93em;
       font-weight: 600; cursor: pointer; text-align: left;
       transition: border-color .15s, background .15s;
@@ -89,7 +105,7 @@
 
     /* ── Feedback ── */
     .feedback {
-      border-radius: 14px; padding: 14px 16px; display: none;
+      border-radius: 14px; padding: 12px 16px; display: none;
       flex-direction: column; gap: 4px;
     }
     .feedback.correct { display: flex; background: #eafaf1; border: 2px solid #27ae60; }
@@ -97,7 +113,7 @@
     .fb-head { font-weight: 700; font-size: 0.9em; }
     .feedback.correct .fb-head { color: #27ae60; }
     .feedback.wrong   .fb-head { color: #e74c3c; }
-    .fb-body { font-size: 0.82em; color: #7f8c8d; line-height: 1.4; }
+    .fb-body { font-size: 0.8em; color: #7f8c8d; line-height: 1.4; }
 
     .btn-continue {
       width: 100%; padding: 15px; background: #2980b9; color: white; border: none;
@@ -124,56 +140,68 @@
     .weak-word-item .ww-term  { font-weight: 700; }
     .weak-word-item .ww-trans { color: #7f8c8d; margin-left: 6px; }
     .q-highlight { color: #c0392b; }
+
+    /* Type word */
     .type-area { display: flex; flex-direction: column; gap: 10px; }
     .type-input {
-      width: 100%; padding: 15px 16px; border: 2px solid #e1e8ed;
-      border-radius: 14px; font-size: 1em; font-family: inherit;
-      transition: border-color .15s;
+      width: 100%; padding: 14px 16px; border: 2px solid #e1e8ed;
+      border-radius: 14px; font-size: 1em; font-family: inherit; transition: border-color .15s;
     }
     .type-input:focus { outline: none; border-color: #2980b9; }
-    .btn-submit {
-      padding: 15px; background: #2980b9; color: white; border: none;
-      border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer;
-    }
-    .scramble-area { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .btn-submit { padding: 14px; background: #2980b9; color: white; border: none; border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer; }
+
+    /* Sentence scramble:
+       scramble-area fills available height in q-content.
+       answer zone is fixed at the top.
+       word bank gets the rest and scrolls if there are too many tiles. */
+    .scramble-area { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
     .scramble-answer {
-      min-height: 64px; background: white; border-radius: 14px; padding: 10px 12px;
-      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      flex-shrink: 0;
+      min-height: 56px; background: white; border-radius: 14px; padding: 10px 12px;
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
       border: 2px dashed #c8d6e5;
     }
-    .scramble-bank { display: flex; flex-wrap: wrap; gap: 10px; }
+    .scramble-bank {
+      flex: 1; min-height: 0; overflow-y: auto;
+      display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px;
+    }
     .word-tile {
-      padding: 9px 14px; background: white; border: 2px solid #c8d6e5;
-      border-radius: 12px; cursor: pointer; font-size: 1em; font-weight: 600;
+      padding: 9px 13px; background: white; border: 2px solid #c8d6e5;
+      border-radius: 12px; cursor: pointer; font-size: 0.95em; font-weight: 600;
       color: #2c3e50; transition: border-color .15s, opacity .15s;
     }
     .word-tile:hover:not(:disabled) { border-color: #2980b9; }
     .word-tile:disabled { opacity: 0.4; cursor: default; }
     .word-tile.in-answer { border-color: #2980b9; background: #eaf4fb; }
-    .mp-grid { display: flex; gap: 10px; flex: 1; min-height: 0; }
-    .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+
+    /* Match pairs: fills available height, tiles stay small */
+    .mp-grid { flex: 1; min-height: 0; display: flex; gap: 8px; }
+    .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
     .mp-tile {
-      flex: 1; width: 100%; padding: 10px;
-      background: white; border: 2px solid #e1e8ed; border-radius: 16px;
-      font-size: 1.05em; font-weight: 600; color: #2c3e50; cursor: pointer;
+      flex: 1; width: 100%; padding: 8px 6px;
+      background: white; border: 2px solid #e1e8ed; border-radius: 14px;
+      font-size: 0.88em; font-weight: 600; color: #2c3e50; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       text-align: center; transition: border-color .15s, background .15s;
-      line-height: 1.3; word-break: break-word;
+      line-height: 1.25; word-break: break-word;
     }
     .mp-tile:hover:not(:disabled) { border-color: #2980b9; background: #eaf4fb; }
     .mp-tile.selected { border-color: #2980b9; background: #eaf4fb; color: #2980b9; }
     .mp-tile.correct  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60 !important; }
     .mp-tile.wrong    { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c !important; }
     .mp-tile:disabled { cursor: default; }
-    .mp-tile.mp-audio { font-size: 2em; letter-spacing: 0; }
+    .mp-tile.mp-audio { font-size: 1.6em; }
 
-    /* ── Flip card ── */
-    #card-area { perspective: 1200px; flex: 1; min-height: 0; max-height: min(55vh, 400px); display: flex; flex-direction: column; gap: 10px; }
+    /* Flip card: fills most of available height */
+    #card-area {
+      perspective: 1200px;
+      flex: 1; min-height: 0; max-height: min(62vh, 460px);
+      display: flex; flex-direction: column; gap: 10px;
+    }
     .fc-wrap {
-      flex: 1; min-height: 0; width: 100%;
+      flex: 1; min-height: 0; width: 100%; position: relative;
       transform-style: preserve-3d;
       transition: transform .42s cubic-bezier(.4,0,.2,1);
-      position: relative;
     }
     .fc-wrap.flipped { transform: rotateY(180deg); }
     .fc-front, .fc-back {
@@ -183,18 +211,18 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.10);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 16px 20px; cursor: pointer;
+      padding: 20px; cursor: pointer;
       border-top: 4px solid #2980b9;
     }
     .fc-back { transform: rotateY(180deg); justify-content: flex-start; }
-    .fc-term { font-size: 2em; font-weight: 800; color: #2c3e50; text-align: center; line-height: 1.2; }
+    .fc-term { font-size: 2.2em; font-weight: 800; color: #2c3e50; text-align: center; line-height: 1.2; }
     .fc-tap-hint { font-size: 0.75em; color: #bdc3c7; margin-top: 14px; }
-    .fc-back-trans { font-size: 1.5em; font-weight: 800; color: #2980b9; text-align: center; margin-bottom: 6px; }
+    .fc-back-trans { font-size: 1.6em; font-weight: 800; color: #2980b9; text-align: center; margin-bottom: 6px; }
     .fc-back-def { font-size: 0.84em; color: #7f8c8d; text-align: center; line-height: 1.5; margin-top: 8px; }
-    .fc-grade-row { display: none; gap: 10px; }
+    .fc-grade-row { flex-shrink: 0; display: none; gap: 10px; }
     .fc-grade-row.visible { display: flex; }
-    .btn-grade-wrong { flex: 1; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
-    .btn-grade-correct { flex: 1; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
+    .btn-grade-wrong  { flex: 1; padding: 14px; background: #e74c3c; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
+    .btn-grade-correct{ flex: 1; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
     .fc-type-area { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; width: 100%; }
     .fc-type-input { width: 100%; padding: 12px 14px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1em; font-family: inherit; outline: none; text-align: center; }
     .fc-type-input:focus { border-color: #2980b9; }
