@@ -84,6 +84,10 @@ Key stored in `accento_shared.googleTtsKey`. Voice gender in `accento_shared.tts
 
 Body is `height: 100dvh; overflow: hidden` — no page scroll ever.
 Screen is `flex: 1; min-height: 0` — bounded flex child.
-`#screen-q` is `overflow: hidden` — bounded, makes `flex: 1` on children work.
-`.choices` and `.mp-grid` both have `flex: 1; min-height: 0` to fill available space.
-`.mp-grid` has `max-height: 500px` to prevent tiles becoming absurdly tall.
+`#screen-q` uses a two-part layout:
+- `.q-content` — `flex: 1; min-height: 0; overflow-y: auto` — prompt + exercise area, scrollable if needed
+- `.q-footer` — `flex-shrink: 0` — feedback + Continue button, always pinned at bottom, never clipped
+
+`.scramble-area` has `flex: 1; min-height: 0` so the word bank fills space.
+`#card-area` has `flex: 1; max-height: min(62vh, 460px)` — flip cards fill most of available height.
+`.mp-grid` has `flex: 1; max-height: min(72vh, 400px)` — match pairs fill space without stretching absurdly.
