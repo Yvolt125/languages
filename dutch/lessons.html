@@ -39,6 +39,7 @@
     .big-icon { font-size: 3.2em; }
     h2 { font-size: 1.25em; font-weight: 800; color: #2c3e50; }
     .sub { font-size: 0.88em; color: #7f8c8d; max-width: 300px; line-height: 1.5; }
+    .build-stamp { font-size: 0.68em; color: #bdc3c7; }
     .btn-primary {
       padding: 14px 36px; background: #2980b9; color: white; border: none;
       border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer;
@@ -87,10 +88,9 @@
     }
     .btn-tts:hover { background: #d4e9f7; }
 
-    /* Multiple choice: fixed-height buttons, no stretching */
-    .choices { display: flex; flex-direction: column; gap: 9px; }
+    .choices { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 9px; }
     .choice-btn {
-      width: 100%; min-height: 56px; padding: 10px 16px;
+      flex: 1; max-height: 80px; width: 100%; min-height: 52px; padding: 10px 16px;
       background: white; color: #2c3e50;
       border: 2px solid #e1e8ed; border-radius: 14px; font-size: 0.93em;
       font-weight: 600; cursor: pointer; text-align: left;
@@ -103,13 +103,14 @@
     .choice-btn.wrong   { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c; }
     .choice-btn.reveal  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60; }
 
-    /* ── Feedback ── */
+    /* ── Feedback — always in layout (visibility:hidden), so footer height never shifts ── */
     .feedback {
-      border-radius: 14px; padding: 12px 16px; display: none;
-      flex-direction: column; gap: 4px;
+      border-radius: 14px; padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      visibility: hidden;
     }
-    .feedback.correct { display: flex; background: #eafaf1; border: 2px solid #27ae60; }
-    .feedback.wrong   { display: flex; background: #fdedec; border: 2px solid #e74c3c; }
+    .feedback.correct { visibility: visible; background: #eafaf1; border: 2px solid #27ae60; }
+    .feedback.wrong   { visibility: visible; background: #fdedec; border: 2px solid #e74c3c; }
     .fb-head { font-weight: 700; font-size: 0.9em; }
     .feedback.correct .fb-head { color: #27ae60; }
     .feedback.wrong   .fb-head { color: #e74c3c; }
@@ -178,7 +179,7 @@
     .mp-grid { flex: 1; min-height: 0; max-height: min(72vh, 400px); display: flex; gap: 8px; }
     .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
     .mp-tile {
-      flex: 1; max-height: 90px; width: 100%; padding: 8px 6px;
+      flex: 1; min-height: 52px; width: 100%; padding: 8px 6px;
       background: white; border: 2px solid #e1e8ed; border-radius: 14px;
       font-size: 0.88em; font-weight: 600; color: #2c3e50; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -248,6 +249,7 @@
     <p class="sub" id="start-sub">Loading…</p>
     <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
     <a class="btn-secondary" href="index.html">Back</a>
+    <p class="build-stamp">Updated 2026-05-02</p>
   </div>
 </div>
 
@@ -573,7 +575,7 @@
     if (type === 'fill-blank') {
       const valid = word.examples.filter(ex => ex.es && ex.es.toLowerCase().includes(word.term.toLowerCase()));
       const ex = valid[Math.floor(Math.random() * valid.length)];
-      const blanked = ex.es.replace(new RegExp(escRe(word.term), 'gi'), '______');
+      const blanked = ex.es.replace(new RegExp(escRe(word.term) + '\\S*', 'gi'), '______');
       return {
         word, type,
         label:        'Fill in the blank',
@@ -622,7 +624,7 @@
       pw.innerHTML = '<span style="font-size:2em">🔊</span>';
     } else if (currentQ.boldTerm) {
       const esc = currentQ.prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      pw.innerHTML = esc.replace(new RegExp('(' + escRe(currentQ.boldTerm) + ')', 'gi'),
+      pw.innerHTML = esc.replace(new RegExp('(' + escRe(currentQ.boldTerm) + '\\S*)', 'gi'),
         '<strong class="q-highlight">$1</strong>');
     } else {
       pw.textContent = currentQ.prompt;
