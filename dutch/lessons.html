@@ -5,200 +5,208 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Lesson — Dutch</title>
   <link rel="manifest" href="../manifest.json">
-  <meta name="theme-color" content="#1a252f">
+  <meta name="theme-color" content="#0f172a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5;
-           height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0f172a; color: #f1f5f9;
+      height: 100vh; height: 100dvh;
+      overflow: hidden; display: flex; flex-direction: column;
+    }
 
     header {
-      background: #1a252f; color: white; padding: 14px 20px;
-      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+      background: #0f172a; padding: 0 16px;
+      height: 48px; display: flex; align-items: center;
+      justify-content: space-between; flex-shrink: 0;
+      border-bottom: 1px solid #1e293b;
     }
-    .back { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em; }
-    .back:hover { color: white; }
-    .build-ver { font-size: 0.62em; color: rgba(255,255,255,0.35); letter-spacing: 0.5px; }
-    .hearts { font-size: 1.05em; letter-spacing: 2px; min-width: 60px; text-align: right; }
+    .back { color: #64748b; text-decoration: none; font-size: 0.85em; font-weight: 600; }
+    .back:hover { color: #f1f5f9; }
+    .build-ver { font-size: 0.58em; color: #334155; letter-spacing: 0.4px; }
+    .lives { display: flex; align-items: center; gap: 5px; }
+    .life { width: 10px; height: 10px; border-radius: 50%; background: #60a5fa; transition: background .3s; }
+    .life.off { background: #1e293b; border: 1.5px solid #334155; }
 
-    .offline-banner { display: none; background: #e67e22; color: white;
-      text-align: center; padding: 6px 16px; font-size: 0.78em; font-weight: 600; flex-shrink: 0; }
+    .seg-progress {
+      display: flex; gap: 3px; padding: 8px 16px 6px;
+      background: #0f172a; flex-shrink: 0;
+    }
+    .seg { flex: 1; height: 4px; border-radius: 99px; background: #1e293b; transition: background .3s; }
+    .seg.done    { background: #60a5fa; }
+    .seg.current { background: #3b82f6; }
+
+    .offline-banner {
+      display: none; background: #92400e; color: #fde68a;
+      text-align: center; padding: 5px 16px; font-size: 0.77em; font-weight: 600; flex-shrink: 0;
+    }
     .offline-banner.visible { display: block; }
-    .progress-bar { height: 5px; background: #2c3e50; flex-shrink: 0; }
-    .progress-fill { height: 100%; background: #2980b9; transition: width .3s; }
 
-    /* ── Screens ── */
     .screen { flex: 1; min-height: 0; display: none; flex-direction: column; }
     .screen.active { display: flex; }
 
+    /* ── Start / Finish ── */
     .center-box {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 32px 20px; gap: 14px; text-align: center;
+      padding: 32px 24px; gap: 16px; text-align: center;
     }
     .big-icon { font-size: 3.2em; }
-    h2 { font-size: 1.25em; font-weight: 800; color: #2c3e50; }
-    .sub { font-size: 0.88em; color: #7f8c8d; max-width: 300px; line-height: 1.5; }
-    .build-stamp { font-size: 0.68em; color: #bdc3c7; }
+    h2 { font-size: 1.3em; font-weight: 800; color: #f1f5f9; }
+    .sub { font-size: 0.87em; color: #64748b; max-width: 300px; line-height: 1.5; }
+    .build-stamp { font-size: 0.65em; color: #334155; }
     .btn-primary {
-      padding: 14px 36px; background: #2980b9; color: white; border: none;
-      border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer;
+      padding: 15px 40px; background: #60a5fa; color: #0f172a;
+      border: none; border-radius: 99px; font-size: 0.95em; font-weight: 800; cursor: pointer;
     }
+    .btn-primary:hover { background: #93c5fd; }
     .btn-secondary {
-      padding: 12px 28px; background: #f0f2f5; color: #7f8c8d; border: none;
-      border-radius: 14px; font-size: 0.88em; cursor: pointer;
+      padding: 12px 28px; background: #1e293b; color: #64748b;
+      border: 1.5px solid #334155; border-radius: 99px;
+      font-size: 0.87em; font-weight: 600; cursor: pointer;
       text-decoration: none; display: inline-block;
     }
-
-    /* ── Question screen ── */
-    #screen-q { padding: 0; gap: 0; align-items: stretch; overflow: hidden; position: relative; }
-    /* q-content scrolls if needed; bottom padding reserves space for the absolute footer */
-    .q-content {
-      flex: 1; min-height: 0;
-      display: flex; flex-direction: column;
-      padding: 12px 16px 180px; gap: 10px;
-      overflow-y: auto;
-    }
-    /* absolute positioning: footer is ALWAYS at the bottom, no flex math needed */
-    .q-footer {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      background: #f0f2f5;
-      padding: 8px 16px 20px; gap: 8px;
-      display: flex; flex-direction: column;
-    }
-
-    .q-label {
-      flex-shrink: 0;
-      font-size: 0.8em; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 1px; color: #5a6a7a; text-align: center;
-    }
-
-    /* Prompt card: compact, never stretches */
-    .q-prompt {
-      flex-shrink: 0;
-      background: white; border-radius: 16px; padding: 14px 18px;
-      text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-      border-top: 4px solid #2980b9;
-    }
-    .prompt-word { font-size: 1.6em; font-weight: 800; color: #2c3e50; line-height: 1.2; }
-    .prompt-word.is-sentence { font-size: 1.05em; font-weight: 700; line-height: 1.4; }
-    .prompt-hint { font-size: 0.8em; color: #7f8c8d; margin-top: 5px; line-height: 1.4; }
-    .btn-tts {
-      margin-top: 10px; background: #eaf4fb; border: none; border-radius: 8px;
-      padding: 6px 14px; font-size: 0.8em; cursor: pointer; color: #2980b9; font-weight: 600;
-    }
-    .btn-tts:hover { background: #d4e9f7; }
-
-    .choices { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 9px; }
-    .choice-btn {
-      flex: 1; max-height: 80px; width: 100%; min-height: 52px; padding: 10px 16px;
-      background: white; color: #2c3e50;
-      border: 2px solid #e1e8ed; border-radius: 14px; font-size: 0.93em;
-      font-weight: 600; cursor: pointer; text-align: left;
-      transition: border-color .15s, background .15s;
-      display: flex; align-items: center;
-    }
-    .choice-btn:hover:not(:disabled) { border-color: #2980b9; background: #eaf4fb; }
-    .choice-btn:disabled { cursor: default; }
-    .choice-btn.correct { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60; }
-    .choice-btn.wrong   { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c; }
-    .choice-btn.reveal  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60; }
-
-    /* ── Feedback — always in layout (visibility:hidden), so footer height never shifts ── */
-    .feedback {
-      border-radius: 14px; padding: 12px 16px;
-      display: flex; flex-direction: column; gap: 4px;
-      visibility: hidden;
-    }
-    .feedback.correct { visibility: visible; background: #eafaf1; border: 2px solid #27ae60; }
-    .feedback.wrong   { visibility: visible; background: #fdedec; border: 2px solid #e74c3c; }
-    .fb-head { font-weight: 700; font-size: 0.9em; }
-    .feedback.correct .fb-head { color: #27ae60; }
-    .feedback.wrong   .fb-head { color: #e74c3c; }
-    .fb-body { font-size: 0.8em; color: #7f8c8d; line-height: 1.4; }
-
-    .btn-continue {
-      width: 100%; padding: 15px; background: #2980b9; color: white; border: none;
-      border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer;
-      visibility: hidden;
-    }
-    .btn-continue.visible { visibility: visible; }
-
-    /* ── Finish screen ── */
+    .btn-secondary:hover { color: #f1f5f9; }
     .stars { font-size: 2.4em; letter-spacing: 6px; }
     .score-row { display: flex; gap: 24px; justify-content: center; }
     .sc { text-align: center; }
-    .sc-num { font-size: 2em; font-weight: 800; color: #2980b9; }
-    .sc-lbl { font-size: 0.75em; color: #7f8c8d; margin-top: 2px; }
-
-    /* Weak words summary */
+    .sc-num { font-size: 2em; font-weight: 800; color: #60a5fa; }
+    .sc-lbl { font-size: 0.73em; color: #64748b; margin-top: 2px; }
     .weak-summary {
-      background: #fef5e7; border-radius: 14px; padding: 14px 16px;
-      max-width: 340px; width: 100%; text-align: left;
+      background: #1c1507; border: 1.5px solid #78350f; border-radius: 16px;
+      padding: 14px 16px; max-width: 340px; width: 100%; text-align: left;
     }
-    .weak-summary h3 { font-size: 0.85em; color: #e67e22; font-weight: 700; margin-bottom: 8px; }
-    .weak-word-item { font-size: 0.82em; color: #2c3e50; padding: 3px 0; border-bottom: 1px solid #fdebd0; }
+    .weak-summary h3 { font-size: 0.83em; color: #fbbf24; font-weight: 700; margin-bottom: 8px; }
+    .weak-word-item { font-size: 0.82em; color: #f1f5f9; padding: 3px 0; border-bottom: 1px solid #292016; }
     .weak-word-item:last-child { border-bottom: none; }
     .weak-word-item .ww-term  { font-weight: 700; }
-    .weak-word-item .ww-trans { color: #7f8c8d; margin-left: 6px; }
-    .q-highlight { color: #e67e22; }
+    .weak-word-item .ww-trans { color: #64748b; margin-left: 6px; }
+
+    /* ── Question screen ── */
+    #screen-q { gap: 0; overflow: hidden; }
+
+    .q-top {
+      flex-shrink: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 16px 20px; gap: 8px;
+    }
+
+    .q-label {
+      font-size: 0.72em; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: #60a5fa;
+      background: #172554; padding: 4px 14px; border-radius: 99px;
+    }
+
+    .q-prompt { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .prompt-word { font-size: 1.9em; font-weight: 800; color: #f1f5f9; line-height: 1.2; }
+    .prompt-word.is-sentence { font-size: 1.05em; font-weight: 700; line-height: 1.5; color: #cbd5e1; }
+    .prompt-hint { font-size: 0.78em; color: #64748b; }
+    .q-highlight { color: #60a5fa; }
+    .btn-tts {
+      background: #172554; border: 1.5px solid #1e40af;
+      border-radius: 99px; padding: 5px 14px;
+      font-size: 0.78em; cursor: pointer; color: #93c5fd; font-weight: 600;
+    }
+    .btn-tts:hover { background: #1e3a8a; }
+
+    .q-bottom {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      padding: 0 16px;
+    }
+
+    .q-body {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Multiple choice: 2×2 grid */
+    .choices {
+      flex: 1; min-height: 0;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; align-content: center;
+    }
+    .choice-btn {
+      background: #1e293b; border: 2px solid #334155;
+      border-radius: 16px; font-size: 0.9em; font-weight: 600;
+      color: #f1f5f9; cursor: pointer; padding: 14px 10px;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; line-height: 1.3;
+      transition: border-color .15s, background .15s;
+    }
+    .choice-btn:hover:not(:disabled) { border-color: #60a5fa; background: #172554; color: #93c5fd; }
+    .choice-btn:disabled { cursor: default; }
+    .choice-btn.correct { border-color: #34d399 !important; background: #052e16 !important; color: #34d399 !important; }
+    .choice-btn.wrong   { border-color: #f87171 !important; background: #450a0a !important; color: #f87171 !important; }
+    .choice-btn.reveal  { border-color: #34d399 !important; background: #052e16 !important; color: #34d399 !important; }
 
     /* Type word */
-    .type-area { display: flex; flex-direction: column; gap: 10px; }
-    .type-input {
-      width: 100%; padding: 14px 16px; border: 2px solid #e1e8ed;
-      border-radius: 14px; font-size: 1em; font-family: inherit; transition: border-color .15s;
+    .type-area {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      justify-content: center; gap: 12px;
     }
-    .type-input:focus { outline: none; border-color: #2980b9; }
-    .btn-submit { padding: 14px; background: #2980b9; color: white; border: none; border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer; }
+    .type-input {
+      width: 100%; padding: 15px 18px;
+      background: #1e293b; border: 2px solid #334155;
+      border-radius: 14px; font-size: 1em; font-family: inherit;
+      color: #f1f5f9; transition: border-color .15s;
+    }
+    .type-input:focus { outline: none; border-color: #60a5fa; }
+    .type-input::placeholder { color: #475569; }
+    .btn-submit {
+      padding: 15px; background: #60a5fa; color: #0f172a;
+      border: none; border-radius: 99px; font-size: 1em; font-weight: 800; cursor: pointer;
+    }
+    .btn-submit:hover { background: #93c5fd; }
 
-    /* Sentence scramble:
-       scramble-area fills available height in q-content.
-       answer zone is fixed at the top.
-       word bank gets the rest and scrolls if there are too many tiles. */
+    /* Sentence scramble */
     .scramble-area { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
     .scramble-answer {
-      flex-shrink: 0;
-      min-height: 56px; background: white; border-radius: 14px; padding: 10px 12px;
+      flex-shrink: 0; min-height: 52px;
+      background: #1e293b; border-radius: 14px; padding: 10px 12px;
       display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-      border: 2px dashed #c8d6e5;
+      border: 2px dashed #334155;
     }
     .scramble-bank {
       flex: 1; min-height: 0; overflow-y: auto;
       display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px;
     }
     .word-tile {
-      padding: 9px 13px; background: white; border: 2px solid #c8d6e5;
-      border-radius: 12px; cursor: pointer; font-size: 0.95em; font-weight: 600;
-      color: #2c3e50; transition: border-color .15s, opacity .15s;
+      padding: 9px 14px; background: #1e293b; border: 2px solid #334155;
+      border-radius: 12px; cursor: pointer; font-size: 0.93em; font-weight: 600;
+      color: #f1f5f9; transition: border-color .15s, opacity .15s;
     }
-    .word-tile:hover:not(:disabled) { border-color: #2980b9; }
-    .word-tile:disabled { opacity: 0.4; cursor: default; }
-    .word-tile.in-answer { border-color: #2980b9; background: #eaf4fb; }
+    .word-tile:hover:not(:disabled) { border-color: #60a5fa; }
+    .word-tile:disabled { opacity: 0.35; cursor: default; }
+    .word-tile.in-answer { border-color: #60a5fa; background: #172554; color: #93c5fd; }
 
-    /* Match pairs: fills available height, tiles capped so they don't get absurd on tall phones */
-    .mp-grid { flex: 1; min-height: 0; max-height: min(72vh, 400px); display: flex; gap: 8px; }
+    /* Match pairs */
+    .mp-grid { flex: 1; min-height: 0; display: flex; gap: 10px; }
     .mp-col  { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
     .mp-tile {
-      flex: 1; min-height: 52px; width: 100%; padding: 8px 6px;
-      background: white; border: 2px solid #e1e8ed; border-radius: 14px;
-      font-size: 0.88em; font-weight: 600; color: #2c3e50; cursor: pointer;
+      flex: 1; min-height: 52px; max-height: 90px; width: 100%; padding: 8px 6px;
+      background: #1e293b; border: 2px solid #334155; border-radius: 14px;
+      font-size: 0.87em; font-weight: 600; color: #f1f5f9; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       text-align: center; transition: border-color .15s, background .15s;
       line-height: 1.25; word-break: break-word;
     }
-    .mp-tile:hover:not(:disabled) { border-color: #2980b9; background: #eaf4fb; }
-    .mp-tile.selected { border-color: #2980b9; background: #eaf4fb; color: #2980b9; }
-    .mp-tile.correct  { border-color: #27ae60 !important; background: #eafaf1 !important; color: #27ae60 !important; }
-    .mp-tile.wrong    { border-color: #e74c3c !important; background: #fdedec !important; color: #e74c3c !important; }
+    .mp-tile:hover:not(:disabled) { border-color: #60a5fa; background: #172554; color: #93c5fd; }
+    .mp-tile.selected { border-color: #60a5fa; background: #172554; color: #93c5fd; }
+    .mp-tile.correct  { border-color: #34d399 !important; background: #052e16 !important; color: #34d399 !important; }
+    .mp-tile.wrong    { border-color: #f87171 !important; background: #450a0a !important; color: #f87171 !important; }
     .mp-tile:disabled { cursor: default; }
     .mp-tile.mp-audio { font-size: 1.6em; }
 
-    /* Flip card: fills most of available height */
+    /* Flip card */
     #card-area {
       perspective: 1200px;
-      flex: 1; min-height: 0; max-height: min(62vh, 460px);
+      flex: 1; min-height: 0;
       display: flex; flex-direction: column; gap: 10px;
     }
     .fc-wrap {
@@ -210,39 +218,78 @@
     .fc-front, .fc-back {
       position: absolute; inset: 0;
       backface-visibility: hidden; -webkit-backface-visibility: hidden;
-      background: white; border-radius: 20px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      background: #1e293b; border-radius: 20px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.4);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       padding: 20px; cursor: pointer;
-      border-top: 4px solid #2980b9;
+      border: 2px solid #334155;
     }
     .fc-back { transform: rotateY(180deg); justify-content: flex-start; }
-    .fc-term { font-size: 2.2em; font-weight: 800; color: #2c3e50; text-align: center; line-height: 1.2; }
-    .fc-tap-hint { font-size: 0.75em; color: #bdc3c7; margin-top: 14px; }
-    .fc-back-trans { font-size: 1.6em; font-weight: 800; color: #2980b9; text-align: center; margin-bottom: 6px; }
-    .fc-back-def { font-size: 0.84em; color: #7f8c8d; text-align: center; line-height: 1.5; margin-top: 8px; }
+    .fc-term { font-size: 2.2em; font-weight: 800; color: #f1f5f9; text-align: center; line-height: 1.2; }
+    .fc-tap-hint { font-size: 0.72em; color: #475569; margin-top: 14px; }
+    .fc-back-trans { font-size: 1.6em; font-weight: 800; color: #60a5fa; text-align: center; margin-bottom: 6px; }
+    .fc-back-def { font-size: 0.82em; color: #64748b; text-align: center; line-height: 1.5; margin-top: 8px; }
     .fc-grade-row { flex-shrink: 0; display: none; gap: 10px; }
     .fc-grade-row.visible { display: flex; }
-    .btn-grade-wrong  { flex: 1; padding: 14px; background: #e74c3c; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
-    .btn-grade-correct{ flex: 1; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 14px; font-size: 0.95em; font-weight: 700; cursor: pointer; }
+    .btn-grade-wrong   { flex: 1; padding: 14px; background: #450a0a; color: #f87171; border: 2px solid #f87171; border-radius: 99px; font-size: 0.93em; font-weight: 700; cursor: pointer; }
+    .btn-grade-correct { flex: 1; padding: 14px; background: #052e16; color: #34d399; border: 2px solid #34d399; border-radius: 99px; font-size: 0.93em; font-weight: 700; cursor: pointer; }
     .fc-type-area { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; width: 100%; }
-    .fc-type-input { width: 100%; padding: 12px 14px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1em; font-family: inherit; outline: none; text-align: center; }
-    .fc-type-input:focus { border-color: #2980b9; }
-    .btn-fc-check { padding: 12px; background: #2980b9; color: white; border: none; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; }
+    .fc-type-input {
+      width: 100%; padding: 12px 14px; background: #0f172a; border: 2px solid #334155;
+      border-radius: 12px; font-size: 1em; font-family: inherit; outline: none;
+      text-align: center; color: #f1f5f9;
+    }
+    .fc-type-input:focus { border-color: #60a5fa; }
+    .fc-type-input::placeholder { color: #475569; }
+    .btn-fc-check {
+      padding: 12px; background: #60a5fa; color: #0f172a;
+      border: none; border-radius: 99px; font-size: 0.9em; font-weight: 800; cursor: pointer;
+    }
+
+    .q-bar {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 10px 0 max(20px, env(safe-area-inset-bottom));
+    }
+
+    .fb-chip {
+      border-radius: 12px; padding: 10px 16px;
+      display: flex; flex-direction: column; gap: 2px;
+      visibility: hidden; min-height: 46px;
+    }
+    .fb-chip.show { visibility: visible; }
+    .fb-chip.correct { background: #052e16; border: 1.5px solid #10b981; }
+    .fb-chip.wrong   { background: #450a0a; border: 1.5px solid #ef4444; }
+    .fb-head { font-size: 0.83em; font-weight: 800; }
+    .fb-chip.correct .fb-head { color: #34d399; }
+    .fb-chip.wrong   .fb-head { color: #f87171; }
+    .fb-body {
+      font-size: 0.76em; font-weight: 500; color: #94a3b8;
+      overflow: hidden; display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+
+    .btn-continue {
+      width: 100%; padding: 16px; background: #60a5fa; color: #0f172a;
+      border: none; border-radius: 99px; font-size: 1em; font-weight: 800; cursor: pointer;
+      visibility: hidden;
+    }
+    .btn-continue.visible { visibility: visible; }
+    .btn-continue:hover { background: #93c5fd; }
   </style>
 </head>
 <body>
 
 <header>
   <a class="back" href="index.html" onclick="return !lessonActive || confirm('Leave this lesson? Your progress will be lost.')">← Dutch</a>
-  <span class="build-ver">2026-05-02 10:16</span>
-  <span class="hearts" id="hearts">❤️❤️❤️</span>
+  <span class="build-ver">2026-05-02 14:00</span>
+  <div class="lives" id="lives">
+    <span class="life"></span><span class="life"></span><span class="life"></span>
+  </div>
 </header>
 <div class="offline-banner" id="offline-banner">You're offline — lesson progress will still be saved</div>
-<div class="progress-bar">
-  <div class="progress-fill" id="prog-fill" style="width:0%"></div>
-</div>
+<div class="seg-progress" id="seg-progress"></div>
 
 <!-- Start screen -->
 <div class="screen active" id="screen-start">
@@ -252,67 +299,71 @@
     <p class="sub" id="start-sub">Loading…</p>
     <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
     <a class="btn-secondary" href="index.html">Back</a>
-    <p class="build-stamp">Updated 2026-05-02 10:16</p>
+    <p class="build-stamp">Updated 2026-05-02 14:00</p>
   </div>
 </div>
 
 <!-- Question screen -->
 <div class="screen" id="screen-q">
-  <div class="q-content">
-    <div class="q-label"    id="q-label"></div>
+  <div class="q-top" id="q-top">
+    <div class="q-label" id="q-label"></div>
     <div class="q-prompt" id="q-prompt">
       <div class="prompt-word" id="prompt-word"></div>
       <div class="prompt-hint" id="prompt-hint"></div>
       <button class="btn-tts" id="btn-tts" style="display:none" onclick="speakPrompt()">🔊 Listen</button>
     </div>
-    <div class="choices" id="choices"></div>
-    <div class="type-area" id="type-area" style="display:none">
-      <input type="text" id="type-input" class="type-input"
-             placeholder="Type your answer…"
-             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-             onkeydown="if(event.key==='Enter')submitType()">
-      <button class="btn-submit" onclick="submitType()">Check →</button>
-    </div>
-    <div class="scramble-area" id="scramble-area" style="display:none">
-      <div class="scramble-answer" id="scramble-answer"></div>
-      <div class="scramble-bank"   id="scramble-bank"></div>
-    </div>
-    <div class="mp-grid" id="mp-grid" style="display:none">
-      <div class="mp-col" id="mp-col-left"></div>
-      <div class="mp-col" id="mp-col-right"></div>
-    </div>
-    <div id="card-area" style="display:none">
-      <div class="fc-wrap" id="fc-wrap" onclick="onFcClick()">
-        <div class="fc-front" id="fc-front">
-          <div class="fc-term" id="fc-term"></div>
-          <div class="fc-tap-hint" id="fc-tap-hint">tap to reveal</div>
-          <button class="btn-tts" id="fc-btn-tts" style="display:none"
-                  onclick="event.stopPropagation(); VS.speak(currentQ.word.term)">🔊 Listen</button>
-          <div class="fc-type-area" id="fc-type-area" style="display:none">
-            <input class="fc-type-input" id="fc-type-input" type="text"
-                   placeholder="Type the Dutch word…"
-                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                   onkeydown="if(event.key==='Enter')submitFcType()">
-            <button class="btn-fc-check" onclick="submitFcType()">Check →</button>
+  </div>
+  <div class="q-bottom">
+    <div class="q-body" id="q-body">
+      <div class="choices" id="choices"></div>
+      <div class="type-area" id="type-area" style="display:none">
+        <input type="text" id="type-input" class="type-input"
+               placeholder="Type your answer…"
+               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+               onkeydown="if(event.key==='Enter')submitType()">
+        <button class="btn-submit" onclick="submitType()">Check →</button>
+      </div>
+      <div class="scramble-area" id="scramble-area" style="display:none">
+        <div class="scramble-answer" id="scramble-answer"></div>
+        <div class="scramble-bank"   id="scramble-bank"></div>
+      </div>
+      <div class="mp-grid" id="mp-grid" style="display:none">
+        <div class="mp-col" id="mp-col-left"></div>
+        <div class="mp-col" id="mp-col-right"></div>
+      </div>
+      <div id="card-area" style="display:none">
+        <div class="fc-wrap" id="fc-wrap" onclick="onFcClick()">
+          <div class="fc-front" id="fc-front">
+            <div class="fc-term" id="fc-term"></div>
+            <div class="fc-tap-hint" id="fc-tap-hint">tap to reveal</div>
+            <button class="btn-tts" id="fc-btn-tts" style="display:none"
+                    onclick="event.stopPropagation(); VS.speak(currentQ.word.term)">🔊 Listen</button>
+            <div class="fc-type-area" id="fc-type-area" style="display:none">
+              <input class="fc-type-input" id="fc-type-input" type="text"
+                     placeholder="Type the Dutch word…"
+                     autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                     onkeydown="if(event.key==='Enter')submitFcType()">
+              <button class="btn-fc-check" onclick="submitFcType()">Check →</button>
+            </div>
+          </div>
+          <div class="fc-back" id="fc-back">
+            <div class="fc-back-trans" id="fc-back-trans"></div>
+            <div class="fc-back-def"   id="fc-back-def"></div>
           </div>
         </div>
-        <div class="fc-back" id="fc-back">
-          <div class="fc-back-trans" id="fc-back-trans"></div>
-          <div class="fc-back-def"   id="fc-back-def"></div>
+        <div class="fc-grade-row" id="fc-grade-row">
+          <button class="btn-grade-wrong"   onclick="fcGrade(false)">✗ Wrong</button>
+          <button class="btn-grade-correct" onclick="fcGrade(true)">✓ Correct</button>
         </div>
       </div>
-      <div class="fc-grade-row" id="fc-grade-row">
-        <button class="btn-grade-wrong"   onclick="fcGrade(false)">✗ Wrong</button>
-        <button class="btn-grade-correct" onclick="fcGrade(true)">✓ Correct</button>
+    </div>
+    <div class="q-bar">
+      <div class="fb-chip" id="feedback">
+        <div class="fb-head" id="fb-head"></div>
+        <div class="fb-body" id="fb-body"></div>
       </div>
+      <button class="btn-continue" id="btn-continue" onclick="nextQuestion()">Continue →</button>
     </div>
-  </div>
-  <div class="q-footer">
-    <div class="feedback" id="feedback">
-      <div class="fb-head" id="fb-head"></div>
-      <div class="fb-body" id="fb-body"></div>
-    </div>
-    <button class="btn-continue" id="btn-continue" onclick="nextQuestion()">Continue →</button>
   </div>
 </div>
 
@@ -338,7 +389,6 @@
 
 <script src="vocab.js"></script>
 <script>
-  /* ── Sound effects ───────────────────────── */
   const SFX = (() => {
     let _ctx = null;
     function ctx() {
@@ -384,9 +434,8 @@
   let questions = [], qIndex = 0, hearts = 3, correctCount = 0, wrongCount = 0;
   let lessonActive = false;
   let currentQ = null, answered = false, currentPromptEs = '';
-  let wrongWords = []; // track which words were answered wrong this session
+  let wrongWords = [];
 
-  /* ── Init ─────────────────────────────── */
   function initStart() {
     const all = VS.getAll();
     const btn = document.getElementById('btn-start');
@@ -408,7 +457,6 @@
     }
   }
 
-  /* ── Build lesson ─────────────────────── */
   function startLesson() {
     lessonActive = true;
     const all = VS.getAll();
@@ -459,7 +507,7 @@
 
     if (!questions.length) { location.href = 'index.html'; return; }
 
-    updateHearts(); updateProgress();
+    updateHearts(); renderSegments();
     showScreen('screen-q');
     showQuestion();
   }
@@ -612,7 +660,6 @@
     return null;
   }
 
-  /* ── Show question ────────────────────── */
   function showQuestion() {
     if (qIndex >= questions.length || hearts <= 0) { showFinish(); return; }
     currentQ = questions[qIndex];
@@ -645,12 +692,13 @@
     const isFlipCard = currentQ.type === 'flip-card';
     const isTypeCard = currentQ.type === 'type-card';
     const isCard     = isFlipCard || isTypeCard;
-    document.getElementById('q-prompt').style.display         = (isMatch || isCard) ? 'none' : '';
-    document.getElementById('choices').style.display          = (!isType && !isScramble && !isMatch && !isCard) ? '' : 'none';
-    document.getElementById('type-area').style.display        = isType     ? '' : 'none';
-    document.getElementById('scramble-area').style.display    = isScramble ? '' : 'none';
-    document.getElementById('mp-grid').style.display          = isMatch    ? '' : 'none';
-    document.getElementById('card-area').style.display        = isCard     ? '' : 'none';
+
+    document.getElementById('q-prompt').style.display        = (isMatch || isCard) ? 'none' : '';
+    document.getElementById('choices').style.display         = (!isType && !isScramble && !isMatch && !isCard) ? '' : 'none';
+    document.getElementById('type-area').style.display       = isType     ? '' : 'none';
+    document.getElementById('scramble-area').style.display   = isScramble ? '' : 'none';
+    document.getElementById('mp-grid').style.display         = isMatch    ? '' : 'none';
+    document.getElementById('card-area').style.display       = isCard     ? '' : 'none';
 
     if (!isType && !isScramble && !isMatch && !isCard) {
       document.getElementById('choices').innerHTML = currentQ.options.map((opt, i) =>
@@ -668,12 +716,11 @@
     if (isTypeCard)  renderTypeCard();
     if (currentQ.audio) setTimeout(() => VS.speak(currentQ.audio), 400);
 
-    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').className = 'fb-chip';
     document.getElementById('btn-continue').classList.remove('visible');
-    updateProgress();
+    renderSegments();
   }
 
-  /* ── Answer ──────────────────────────── */
   function choose(i) {
     if (answered) return;
     answered = true;
@@ -681,7 +728,6 @@
     const chosen  = currentQ.options[i];
     const isRight = chosen === currentQ.answer;
 
-    // Style all buttons
     currentQ.options.forEach((opt, j) => {
       const btn = document.getElementById('c' + j);
       btn.disabled = true;
@@ -690,7 +736,6 @@
     if (!isRight) document.getElementById('c' + i).classList.add('wrong');
     else          document.getElementById('c' + i).classList.add('correct');
 
-    // Track result → feeds back into SRS + weak words
     VS.recordAnswer(currentQ.word.id, isRight);
 
     if (isRight) {
@@ -702,14 +747,8 @@
       hearts--;
       updateHearts();
       SFX.wrong();
-      // Track for end-of-lesson summary
-      if (!wrongWords.find(w => w.id === currentQ.word.id)) {
-        wrongWords.push(currentQ.word);
-      }
-      showFeedback(false,
-        '✗ Incorrect — correct answer: "' + currentQ.answer + '"',
-        currentQ.explain
-      );
+      if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
+      showFeedback(false, '✗ Correct answer: "' + currentQ.answer + '"', currentQ.explain);
       if (VS.hasTTS() && currentQ.speakOnWrong) VS.speak(currentQ.answer);
     }
 
@@ -718,7 +757,7 @@
 
   function showFeedback(ok, head, body) {
     const fb = document.getElementById('feedback');
-    fb.className = 'feedback ' + (ok ? 'correct' : 'wrong');
+    fb.className = 'fb-chip show ' + (ok ? 'correct' : 'wrong');
     document.getElementById('fb-head').textContent = head;
     document.getElementById('fb-body').textContent = body;
   }
@@ -729,19 +768,17 @@
     showQuestion();
   }
 
-  /* ── Finish ──────────────────────────── */
   function showFinish() {
     lessonActive = false;
     const h     = Math.max(0, hearts);
     const stars = h >= 3 ? '⭐⭐⭐' : h >= 2 ? '⭐⭐' : h >= 1 ? '⭐' : '💪';
     const xp    = correctCount * 10;
 
-    document.getElementById('finish-stars').textContent   = stars;
-    document.getElementById('fin-correct').textContent    = correctCount;
-    document.getElementById('fin-wrong').textContent      = wrongCount;
-    document.getElementById('fin-xp').textContent         = xp;
+    document.getElementById('finish-stars').textContent = stars;
+    document.getElementById('fin-correct').textContent  = correctCount;
+    document.getElementById('fin-wrong').textContent    = wrongCount;
+    document.getElementById('fin-xp').textContent       = xp;
 
-    // Show weak words summary if any
     const weakSummary = document.getElementById('weak-summary');
     const weakList    = document.getElementById('weak-list');
     if (wrongWords.length) {
@@ -762,13 +799,11 @@
     setTimeout(() => SFX.finish(), 300);
   }
 
-  /* ── Helpers ─────────────────────────── */
   function speakPrompt() {
     if (currentQ && currentQ.audio) VS.speak(currentQ.audio);
     else if (currentPromptEs) VS.speak(currentPromptEs);
   }
 
-  /* ── Type input ──────────────────────── */
   function submitType() {
     if (answered) return;
     const inp = document.getElementById('type-input');
@@ -783,7 +818,7 @@
       lev(typed.toLowerCase(), correct.toLowerCase()) <= Math.floor(correct.length / 6);
 
     VS.recordAnswer(currentQ.word.id, isRight);
-    inp.style.borderColor = isRight ? '#27ae60' : '#e74c3c';
+    inp.style.borderColor = isRight ? '#34d399' : '#f87171';
 
     if (isRight) {
       correctCount++;
@@ -801,7 +836,6 @@
     document.getElementById('btn-continue').classList.add('visible');
   }
 
-  /* ── Sentence scramble ───────────────── */
   let scrambleSelected = [], scrambleWords = [];
 
   function renderScramble() {
@@ -871,7 +905,6 @@
     return dp[m][n];
   }
 
-  /* ── Match pairs ─────────────────────── */
   let mpLeftSel = null, mpRightSel = null, mpMatched = 0;
   let mpLeftOrder = [], mpRightOrder = [], mpWords = [];
 
@@ -954,7 +987,6 @@
     return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
   }
 
-  /* ── Flip card ───────────────────────── */
   let fcRevealed = false;
 
   function renderFlipCard() {
@@ -1023,7 +1055,7 @@
     const normCorr  = normalise(correct);
     const dist      = lev(normTyped, normCorr);
     const isRight   = normTyped === normCorr || (dist <= 1 && normTyped.length > 1);
-    inp.style.borderColor = isRight ? '#27ae60' : '#e74c3c';
+    inp.style.borderColor = isRight ? '#34d399' : '#f87171';
     document.getElementById('fc-wrap').classList.add('flipped');
     fcRevealed = true;
     if (VS.hasTTS()) VS.speak(currentQ.word.term);
@@ -1042,14 +1074,18 @@
   }
 
   function updateHearts() {
+    const dots = document.querySelectorAll('.life');
     const h = Math.max(0, hearts);
-    document.getElementById('hearts').textContent =
-      '❤️'.repeat(h) + '🖤'.repeat(3 - h);
+    dots.forEach((d, i) => d.classList.toggle('off', i >= h));
   }
 
-  function updateProgress() {
-    const pct = questions.length ? Math.round(qIndex / questions.length * 100) : 0;
-    document.getElementById('prog-fill').style.width = pct + '%';
+  function renderSegments() {
+    const container = document.getElementById('seg-progress');
+    const total = questions.length || SESSION_SIZE;
+    container.innerHTML = Array.from({length: total}, (_, i) => {
+      const cls = i < qIndex ? 'seg done' : i === qIndex ? 'seg current' : 'seg';
+      return `<div class="${cls}"></div>`;
+    }).join('');
   }
 
   function showScreen(id) {
