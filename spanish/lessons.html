@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Lesson — Spanish</title>
   <link rel="manifest" href="../manifest.json">
   <meta name="theme-color" content="#0f172a">
@@ -10,11 +10,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; overflow: hidden; }
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
       background: #0f172a; color: #f1f5f9;
-      height: 100vh; height: 100dvh;
+      height: 100%; height: 100dvh;
       overflow: hidden; display: flex; flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     header {
@@ -254,7 +256,7 @@
     .q-bar {
       flex-shrink: 0;
       display: flex; flex-direction: column; gap: 8px;
-      padding: 10px 0 max(20px, env(safe-area-inset-bottom));
+      padding: 10px 0 16px;
     }
 
     /* Feedback chip: visibility:hidden keeps layout stable */
@@ -288,7 +290,7 @@
 
 <header>
   <a class="back" href="index.html" onclick="return !lessonActive || confirm('Leave this lesson? Your progress will be lost.')">← Spanish</a>
-  <span class="build-ver">2026-05-02 15:55</span>
+  <span class="build-ver">2026-05-02 16:38</span>
   <div class="lives" id="lives">
     <span class="life"></span><span class="life"></span><span class="life"></span>
   </div>
@@ -304,7 +306,7 @@
     <p class="sub" id="start-sub">Loading…</p>
     <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
     <a class="btn-secondary" href="index.html">Back</a>
-    <p class="build-stamp">Updated 2026-05-02 15:55</p>
+    <p class="build-stamp">Updated 2026-05-02 16:38</p>
   </div>
 </div>
 

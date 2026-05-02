@@ -618,6 +618,10 @@
           <label>Definition</label>
           <select id="col-def" onchange="updateImportCount()"></select>
         </div>
+        <div class="col-map-row">
+          <label>Examples</label>
+          <select id="col-examples" onchange="updateImportCount()"></select>
+        </div>
       </div>
     </div>
 
@@ -1566,7 +1570,7 @@
 
     const noneOpt = '<option value="-1">— skip —</option>';
     const colOpts = _importHeaders.map((h, i) => `<option value="${i}">${esc(h)}</option>`).join('');
-    ['col-spanish','col-english','col-pos','col-def'].forEach((id, fi) => {
+    ['col-spanish','col-english','col-pos','col-def','col-examples'].forEach((id, fi) => {
       document.getElementById(id).innerHTML = (fi === 0 ? '' : noneOpt) + colOpts;
     });
 
@@ -1577,11 +1581,13 @@
     const ei   = find('english','translation','en','meaning','translate');
     const pi   = find('pos','part','speech','type','clase');
     const di   = find('def','description','note','definición');
+    const xi   = find('example','examples','ex');
 
-    document.getElementById('col-spanish').value = si >= 0 ? si : 0;
-    document.getElementById('col-english').value = ei >= 0 ? ei : (si === 0 ? 1 : 0);
-    document.getElementById('col-pos').value     = pi >= 0 ? pi : -1;
-    document.getElementById('col-def').value     = di >= 0 ? di : -1;
+    document.getElementById('col-spanish').value  = si >= 0 ? si : 0;
+    document.getElementById('col-english').value  = ei >= 0 ? ei : (si === 0 ? 1 : 0);
+    document.getElementById('col-pos').value      = pi >= 0 ? pi : -1;
+    document.getElementById('col-def').value      = di >= 0 ? di : -1;
+    document.getElementById('col-examples').value = xi >= 0 ? xi : -1;
 
     // Render preview table (first 5 rows)
     const rows = _importData.slice(0, 5);
@@ -1609,6 +1615,7 @@
     const ei   = parseInt(document.getElementById('col-english').value);
     const pi   = parseInt(document.getElementById('col-pos').value);
     const di   = parseInt(document.getElementById('col-def').value);
+    const xi   = parseInt(document.getElementById('col-examples').value);
     const existingTerms = new Set(VS.getAll().map(w => w.term.toLowerCase()));
     let added = 0, dupes = 0;
     _importData.slice(skip).forEach(r => {
@@ -1619,7 +1626,7 @@
         translation:  ei >= 0 ? String(r[ei]||'').trim() : '',
         partOfSpeech: pi >= 0 ? String(r[pi]||'').trim() : '',
         definition:   di >= 0 ? String(r[di]||'').trim() : '',
-        examples: []
+        examples:     xi >= 0 ? parseExamples(String(r[xi]||'').trim()) : []
       });
       if (existingTerms.has(term.toLowerCase())) {
         VS.update(card.id, { tags: [...(card.tags || []), '⚠ possible duplicate'] });
@@ -1680,10 +1687,18 @@
     const csvQ  = v => '"' + String(v || '').replace(/"/g, '""') + '"';
     const rows  = [['term','translation','partOfSpeech','definition','examples'].map(csvQ).join(',')];
     words.forEach(w => {
-      const examples = (w.examples || []).join(' | ');
+      const examples = (w.examples || []).map(ex => (ex.es || '') + ' = ' + (ex.en || '')).join(' | ');
       rows.push([w.term, w.translation, w.partOfSpeech, w.definition, examples].map(csvQ).join(','));
     });
     return '﻿' + rows.join('\r\n');
+  }
+
+  function parseExamples(str) {
+    if (!str) return [];
+    return str.split(' | ').map(pair => {
+      const idx = pair.indexOf(' = ');
+      return idx < 0 ? { es: pair.trim(), en: '' } : { es: pair.slice(0, idx).trim(), en: pair.slice(idx + 3).trim() };
+    }).filter(ex => ex.es);
   }
 
   function generateJSON() {
