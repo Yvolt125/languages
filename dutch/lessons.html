@@ -19,6 +19,7 @@
     }
     .back { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.88em; }
     .back:hover { color: white; }
+    .build-ver { font-size: 0.62em; color: rgba(255,255,255,0.35); letter-spacing: 0.5px; }
     .hearts { font-size: 1.05em; letter-spacing: 2px; min-width: 60px; text-align: right; }
 
     .offline-banner { display: none; background: #e67e22; color: white;
@@ -234,6 +235,7 @@
 
 <header>
   <a class="back" href="index.html" onclick="return !lessonActive || confirm('Leave this lesson? Your progress will be lost.')">← Dutch</a>
+  <span class="build-ver">2026-05-02</span>
   <span class="hearts" id="hearts">❤️❤️❤️</span>
 </header>
 <div class="offline-banner" id="offline-banner">You're offline — lesson progress will still be saved</div>
