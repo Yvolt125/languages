@@ -1,4 +1,4 @@
-const CACHE_NAME = 'accento-v31'; // 2026-05-02 16:38
+const CACHE_NAME = 'accento-v32'; // 2026-05-09 11:29
 
 const PRE_CACHE = [
   './index.html',

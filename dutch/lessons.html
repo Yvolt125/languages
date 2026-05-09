@@ -249,18 +249,24 @@
       border: none; border-radius: 99px; font-size: 0.9em; font-weight: 800; cursor: pointer;
     }
 
+    /* Action bar: fixed to viewport bottom, slides in on answer */
     .q-bar {
-      flex-shrink: 0;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 20;
+      background: #0f172a;
+      border-top: 1px solid #1e293b;
+      padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px);
       display: flex; flex-direction: column; gap: 8px;
-      padding: 10px 0 16px;
+      transform: translateY(110%);
+      transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .q-bar.revealed { transform: translateY(0); }
 
     .fb-chip {
       border-radius: 12px; padding: 10px 16px;
       display: flex; flex-direction: column; gap: 2px;
-      visibility: hidden; min-height: 46px;
     }
-    .fb-chip.show { visibility: visible; }
     .fb-chip.correct { background: #052e16; border: 1.5px solid #10b981; }
     .fb-chip.wrong   { background: #450a0a; border: 1.5px solid #ef4444; }
     .fb-head { font-size: 0.83em; font-weight: 800; }
@@ -275,9 +281,7 @@
     .btn-continue {
       width: 100%; padding: 16px; background: #60a5fa; color: #0f172a;
       border: none; border-radius: 99px; font-size: 1em; font-weight: 800; cursor: pointer;
-      visibility: hidden;
     }
-    .btn-continue.visible { visibility: visible; }
     .btn-continue:hover { background: #93c5fd; }
   </style>
 </head>
@@ -285,7 +289,7 @@
 
 <header>
   <a class="back" href="index.html" onclick="return !lessonActive || confirm('Leave this lesson? Your progress will be lost.')">← Dutch</a>
-  <span class="build-ver">2026-05-02 16:38</span>
+  <span class="build-ver">2026-05-09 11:29</span>
   <div class="lives" id="lives">
     <span class="life"></span><span class="life"></span><span class="life"></span>
   </div>
@@ -301,7 +305,7 @@
     <p class="sub" id="start-sub">Loading…</p>
     <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
     <a class="btn-secondary" href="index.html">Back</a>
-    <p class="build-stamp">Updated 2026-05-02 16:38</p>
+    <p class="build-stamp">Updated 2026-05-09 11:29</p>
   </div>
 </div>
 
@@ -719,7 +723,7 @@
     if (currentQ.audio) setTimeout(() => VS.speak(currentQ.audio), 400);
 
     document.getElementById('feedback').className = 'fb-chip';
-    document.getElementById('btn-continue').classList.remove('visible');
+    document.querySelector('.q-bar').classList.remove('revealed');
     renderSegments();
   }
 
@@ -754,7 +758,6 @@
       if (VS.hasTTS() && currentQ.speakOnWrong) VS.speak(currentQ.answer);
     }
 
-    document.getElementById('btn-continue').classList.add('visible');
   }
 
   function showFeedback(ok, head, body) {
@@ -762,6 +765,7 @@
     fb.className = 'fb-chip show ' + (ok ? 'correct' : 'wrong');
     document.getElementById('fb-head').textContent = head;
     document.getElementById('fb-body').textContent = body;
+    document.querySelector('.q-bar').classList.add('revealed');
   }
 
   function nextQuestion() {
@@ -835,7 +839,6 @@
       showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
       if (VS.hasTTS()) VS.speak(correct);
     }
-    document.getElementById('btn-continue').classList.add('visible');
   }
 
   let scrambleSelected = [], scrambleWords = [];
@@ -893,7 +896,6 @@
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ Correct order: "' + currentQ.answer + '"', currentQ.explain);
     }
-    document.getElementById('btn-continue').classList.add('visible');
   }
 
   function lev(a, b) {
@@ -1043,7 +1045,6 @@
       showFeedback(false, '✗ Marked wrong', '"' + currentQ.word.term + '" = "' + currentQ.word.translation + '"');
     }
     document.getElementById('fc-grade-row').classList.remove('visible');
-    document.getElementById('btn-continue').classList.add('visible');
   }
 
   function submitFcType() {
@@ -1072,7 +1073,6 @@
       if (!wrongWords.find(w => w.id === currentQ.word.id)) wrongWords.push(currentQ.word);
       showFeedback(false, '✗ The answer is "' + correct + '"', currentQ.explain);
     }
-    document.getElementById('btn-continue').classList.add('visible');
   }
 
   function updateHearts() {
