@@ -256,7 +256,7 @@
       z-index: 20;
       background: #0f172a;
       border-top: 1px solid #1e293b;
-      padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px);
+      padding: 12px 16px max(calc(env(safe-area-inset-bottom) + 16px), 56px);
       display: flex; flex-direction: column; gap: 8px;
       transform: translateY(110%);
       transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
@@ -289,7 +289,7 @@
 
 <header>
   <a class="back" href="index.html" onclick="return !lessonActive || confirm('Leave this lesson? Your progress will be lost.')">← Dutch</a>
-  <span class="build-ver">2026-05-09 11:29</span>
+  <span class="build-ver">2026-05-09 11:44</span>
   <div class="lives" id="lives">
     <span class="life"></span><span class="life"></span><span class="life"></span>
   </div>
@@ -305,7 +305,7 @@
     <p class="sub" id="start-sub">Loading…</p>
     <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
     <a class="btn-secondary" href="index.html">Back</a>
-    <p class="build-stamp">Updated 2026-05-09 11:29</p>
+    <p class="build-stamp">Updated 2026-05-09 11:44</p>
   </div>
 </div>
 
