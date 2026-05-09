@@ -1689,7 +1689,7 @@
       const examples = (w.examples || []).map(ex => (ex.es || '') + ' = ' + (ex.en || '')).join(' | ');
       rows.push([w.term, w.translation, w.partOfSpeech, w.definition, examples].map(csvQ).join(','));
     });
-    return '﻿' + rows.join('\r\n');
+    return rows.join('\r\n');
   }
 
   function parseExamples(str) {
@@ -1719,11 +1719,16 @@
   }
 
   function _buildFile() {
-    const isCSV     = _exportFmt === 'csv';
-    const content   = isCSV ? generateCSV() : generateJSON();
-    const mime      = isCSV ? 'text/csv;charset=utf-8' : 'application/json';
-    const filename  = `accento-dutch-${_dateStamp()}.${_exportFmt}`;
-    return { content, mime, filename };
+    const isCSV    = _exportFmt === 'csv';
+    const filename = `accento-dutch-${_dateStamp()}.${_exportFmt}`;
+    if (isCSV) {
+      const encoded = new TextEncoder().encode(generateCSV());
+      const data    = new Uint8Array(3 + encoded.length);
+      data[0] = 0xEF; data[1] = 0xBB; data[2] = 0xBF;
+      data.set(encoded, 3);
+      return { content: data, mime: 'text/csv;charset=utf-8', filename };
+    }
+    return { content: generateJSON(), mime: 'application/json', filename };
   }
 
   function doDownload() {
