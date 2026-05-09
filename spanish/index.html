@@ -747,7 +747,7 @@
   let activeMissingFilter = null;
   let _generating = false;
 
-  function titleCase(s) { return (s || '').trim().replace(/\b\w/g, c => c.toUpperCase()); }
+  function titleCase(s) { return (s || '').trim().split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : w).join(' '); }
   function sentenceCase(s) { const t = (s || '').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
 
   /* ── Offline ─────────────────────────── */
@@ -1264,14 +1264,14 @@
     const el = document.getElementById(altsDivId);
     if (!alts || !alts.length) { el.innerHTML = ''; return; }
     el.innerHTML = alts.map(t =>
-      `<button type="button" class="trans-alt-chip" onclick="pickTransAlt('${altsDivId}','${transInputId}',${JSON.stringify(t)})">${esc(t)}</button>`
+      `<button type="button" class="trans-alt-chip" data-alt="${esc(t)}" onclick="pickTransAlt('${altsDivId}','${transInputId}',this.dataset.alt)">${esc(t)}</button>`
     ).join('');
   }
 
   function pickTransAlt(altsDivId, transInputId, val) {
     document.getElementById(transInputId).value = val;
     document.getElementById(altsDivId).querySelectorAll('.trans-alt-chip')
-      .forEach(c => c.classList.toggle('active', c.textContent === val));
+      .forEach(c => c.classList.toggle('active', c.dataset.alt === val));
   }
 
   /* ── Definition picker ──────────────────── */

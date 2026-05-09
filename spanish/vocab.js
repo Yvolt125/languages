@@ -21,7 +21,7 @@
 
     /* ── CRUD ─────────────────────────────────────── */
     _titleCase(s) {
-      return (s || '').trim().replace(/\b\w/g, c => c.toUpperCase());
+      return (s || '').trim().split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : w).join(' ');
     },
     _sentenceCase(s) {
       const t = (s || '').trim();
@@ -341,13 +341,16 @@
       if (!tr.ok) throw new Error(`Translation error ${tr.status}`);
       const trData = await tr.json();
       if (trData.responseStatus !== 200) throw new Error(trData.responseDetails || 'Translation failed');
-      const translation = trData.responseData.translatedText;
+      let translation = trData.responseData.translatedText;
 
       const seen = new Set([translation.toLowerCase()]);
       const altTranslations = (trData.matches || [])
         .map(m => (m.translation || '').trim())
         .filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
         .slice(0, 5);
+
+      if (translation.trim().toLowerCase() === term.trim().toLowerCase() && altTranslations.length)
+        translation = altTranslations.shift();
 
       const result = { translation, altTranslations, definition: '', partOfSpeech: '', examples: [] };
 
