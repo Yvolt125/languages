@@ -1722,7 +1722,7 @@
   function _buildFile() {
     const isCSV     = _exportFmt === 'csv';
     const content   = isCSV ? generateCSV() : generateJSON();
-    const mime      = isCSV ? 'text/csv' : 'application/json';
+    const mime      = isCSV ? 'text/csv;charset=utf-8' : 'application/json';
     const filename  = `accento-spanish-${_dateStamp()}.${_exportFmt}`;
     return { content, mime, filename };
   }
