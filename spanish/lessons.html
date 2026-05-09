@@ -119,7 +119,7 @@
     .q-bottom {
       flex: 1; min-height: 0;
       display: flex; flex-direction: column;
-      padding: 0 16px;
+      padding: 0 16px 140px;
     }
 
     /* Answer body: fills available space, no scroll (scramble bank scrolls internally) */
@@ -292,7 +292,7 @@
 
 <header>
   <a class="back" href="index.html" onclick="return !lessonActive || confirm('Leave this lesson? Your progress will be lost.')">← Spanish</a>
-  <span class="build-ver">2026-05-09 11:44</span>
+  <span class="build-ver">2026-05-09 12:20</span>
   <div class="lives" id="lives">
     <span class="life"></span><span class="life"></span><span class="life"></span>
   </div>
@@ -308,7 +308,7 @@
     <p class="sub" id="start-sub">Loading…</p>
     <button class="btn-primary" id="btn-start" onclick="startLesson()">Begin</button>
     <a class="btn-secondary" href="index.html">Back</a>
-    <p class="build-stamp">Updated 2026-05-09 11:44</p>
+    <p class="build-stamp">Updated 2026-05-09 12:20</p>
   </div>
 </div>
 
@@ -326,7 +326,7 @@
     <div class="q-body" id="q-body">
       <div class="choices" id="choices"></div>
       <div class="type-area" id="type-area" style="display:none">
-        <input type="text" id="type-input" class="type-input"
+        <input type="text" id="type-input" class="type-input" lang="es"
                placeholder="Type your answer…"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                onkeydown="if(event.key==='Enter')submitType()">
@@ -348,7 +348,7 @@
             <button class="btn-tts" id="fc-btn-tts" style="display:none"
                     onclick="event.stopPropagation(); VS.speak(currentQ.word.term)">🔊 Listen</button>
             <div class="fc-type-area" id="fc-type-area" style="display:none">
-              <input class="fc-type-input" id="fc-type-input" type="text"
+              <input class="fc-type-input" id="fc-type-input" type="text" lang="es"
                      placeholder="Type the Spanish word…"
                      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                      onkeydown="if(event.key==='Enter')submitFcType()">
