@@ -1,4 +1,4 @@
-const CACHE_NAME = 'accento-v41'; // 2026-05-11 fix: sanitize examples on AI gen + JSON import
+const CACHE_NAME = 'accento-v42'; // 2026-05-11 remove Claude, default to Gemini
 
 const PRE_CACHE = [
   './index.html',

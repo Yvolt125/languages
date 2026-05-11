@@ -381,7 +381,7 @@
     /* ── AI Generation ────────────────────────────── */
     async _aiCall(prompt, maxTokens) {
       const s = this.getSettings();
-      const provider = s.aiProvider || 'claude';
+      const provider = s.aiProvider || 'gemini';
       if (provider === 'gemini') {
         const key = s.geminiApiKey;
         if (!key) throw new Error('No Gemini API key set — add it in Settings ⚙️');
