@@ -1,4 +1,4 @@
-const CACHE_NAME = 'accento-v40'; // 2026-05-09 13:30
+const CACHE_NAME = 'accento-v41'; // 2026-05-11 fix: sanitize examples on AI gen + JSON import
 
 const PRE_CACHE = [
   './index.html',

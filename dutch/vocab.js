@@ -432,7 +432,8 @@ Return 2–4 items covering FUNDAMENTALLY different meanings only — do not lis
 [{ "es": "Dutch sentence using the word.", "en": "English translation." }, { "es": "Another natural example.", "en": "English translation." }]`;
       const text = await this._aiCall(PROMPT, 400);
       const data = this._parseJSON(text);
-      return Array.isArray(data) ? data : [];
+      if (!Array.isArray(data)) return [];
+      return data.filter(ex => ex && typeof ex === 'object' && typeof ex.es === 'string' && ex.es);
     },
 
     // Legacy alias

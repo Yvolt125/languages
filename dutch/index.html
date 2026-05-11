@@ -1482,7 +1482,7 @@
             translation:  String(w.translation  || '').trim(),
             partOfSpeech: String(w.partOfSpeech || '').trim(),
             definition:   String(w.definition   || '').trim(),
-            examples:     Array.isArray(w.examples) ? w.examples : []
+            examples:     Array.isArray(w.examples) ? w.examples.filter(ex => ex && typeof ex.es === 'string' && ex.es).map(ex => ({es: ex.es, en: typeof ex.en === 'string' ? ex.en : ''})) : []
           });
           // Restore SRS fields if present
           const srsFields = ['interval','easeFactor','repetitions','nextReview','lastReview','lessonWrong','lessonRight'];
@@ -1686,7 +1686,7 @@
     const csvQ  = v => '"' + String(v || '').replace(/"/g, '""') + '"';
     const rows  = [['term','translation','partOfSpeech','definition','examples'].map(csvQ).join(',')];
     words.forEach(w => {
-      const examples = (w.examples || []).map(ex => (ex.es || '') + ' = ' + (ex.en || '')).join(' | ');
+      const examples = (w.examples || []).filter(ex => typeof ex.es === 'string').map(ex => ex.es + ' = ' + (ex.en || '')).join(' | ');
       rows.push([w.term, w.translation, w.partOfSpeech, w.definition, examples].map(csvQ).join(','));
     });
     return rows.join('\r\n');
